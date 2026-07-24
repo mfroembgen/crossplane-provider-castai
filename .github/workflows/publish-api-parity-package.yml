@@ -51,8 +51,6 @@ jobs:
       - name: Build package
         run: >-
           make -j2
-          PROJECT_NAME="${PACKAGE_NAME}"
-          PROJECT_REPO="github.com/crossplane-contrib/crossplane-provider-castai"
           XPKG_REG_ORGS="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
           XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
           BRANCH_NAME="main"
@@ -62,12 +60,8 @@ jobs:
           BUILD_ARGS: --load
 
       - name: Publish package
-        run: >-
-          make
-          PROJECT_NAME="${PACKAGE_NAME}"
-          PROJECT_REPO="github.com/crossplane-contrib/crossplane-provider-castai"
-          XPKG_REG_ORGS="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
-          XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
-          BRANCH_NAME="main"
-          VERSION="${PACKAGE_VERSION}"
-          xpkg.release.publish
+        run: |
+          .cache/tools/linux_amd64/up-v0.38.4 xpkg push \
+            --package "_output/xpkg/linux_amd64/crossplane-provider-castai-${PACKAGE_VERSION}.xpkg" \
+            --package "_output/xpkg/linux_arm64/crossplane-provider-castai-${PACKAGE_VERSION}.xpkg" \
+            "ghcr.io/${GITHUB_REPOSITORY_OWNER}/${PACKAGE_NAME}:${PACKAGE_VERSION}"
