@@ -1,0 +1,73 @@
+name: Publish API parity package
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  GO_VERSION: "1.25.12"
+  PACKAGE_NAME: crossplane-provider-castai-api-parity
+  PACKAGE_VERSION: v0.38.0-api-parity.1
+  TERRAFORM_PROVIDER_VERSION: 8.51.0-api-parity.1
+  TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX: https://github.com/mfroembgen/terraform-provider-castai/releases/download/v8.51.0-api-parity.1
+  TERRAFORM_NATIVE_PROVIDER_BINARY: terraform-provider-castai_v8.51.0-api-parity.1
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+        with:
+          platforms: all
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+        with:
+          install: true
+
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout provider
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: feat/workload-scaling-policy-api-parity
+          submodules: true
+
+      - name: Setup Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build package
+        run: >-
+          make -j2
+          PROJECT_NAME="${PACKAGE_NAME}"
+          PROJECT_REPO="github.com/crossplane-contrib/crossplane-provider-castai"
+          XPKG_REG_ORGS="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
+          XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
+          BRANCH_NAME="main"
+          VERSION="${PACKAGE_VERSION}"
+          build.all
+        env:
+          BUILD_ARGS: --load
+
+      - name: Publish package
+        run: >-
+          make
+          PROJECT_NAME="${PACKAGE_NAME}"
+          PROJECT_REPO="github.com/crossplane-contrib/crossplane-provider-castai"
+          XPKG_REG_ORGS="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
+          XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/${GITHUB_REPOSITORY_OWNER}"
+          BRANCH_NAME="main"
+          VERSION="${PACKAGE_VERSION}"
+          xpkg.release.publish
