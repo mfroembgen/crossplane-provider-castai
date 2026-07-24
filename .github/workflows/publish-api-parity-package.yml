@@ -61,7 +61,8 @@ jobs:
 
       - name: Publish package
         run: |
-          .cache/tools/linux_amd64/up-v0.38.4 xpkg push \
+          UP_BINARY="$(find .cache/tools -type f -name 'up-v0.38.4' -perm -111 -print -quit)"
+          "${UP_BINARY}" xpkg push \
             --package "_output/xpkg/linux_amd64/crossplane-provider-castai-${PACKAGE_VERSION}.xpkg" \
             --package "_output/xpkg/linux_arm64/crossplane-provider-castai-${PACKAGE_VERSION}.xpkg" \
             "ghcr.io/${GITHUB_REPOSITORY_OWNER}/${PACKAGE_NAME}:${PACKAGE_VERSION}"
