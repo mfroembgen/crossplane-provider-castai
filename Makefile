@@ -7,11 +7,12 @@ PROJECT_REPO ?= github.com/crossplane-contrib/$(PROJECT_NAME)
 export TERRAFORM_VERSION ?= 1.5.7
 
 export TERRAFORM_PROVIDER_SOURCE ?= castai/castai
-export TERRAFORM_PROVIDER_REPO ?= https://github.com/castai/terraform-provider-castai
-export TERRAFORM_PROVIDER_VERSION ?= 9.8.0
+export TERRAFORM_PROVIDER_REPO ?= https://github.com/mfroembgen/terraform-provider-castai
+export TERRAFORM_PROVIDER_VERSION ?= 9.19.0
+export TERRAFORM_PROVIDER_DOCS_REF ?= 97afb2653e04524a636e210bfa581841fc3340ac
 export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-castai
-export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://releases.hashicorp.com/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)/$(TERRAFORM_PROVIDER_VERSION)
-export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-castai_v9.8.0
+export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= $(TERRAFORM_PROVIDER_REPO)/releases/download/v$(TERRAFORM_PROVIDER_VERSION)
+export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-castai_v$(TERRAFORM_PROVIDER_VERSION)
 export TERRAFORM_DOCS_PATH ?= docs/resources
 
 
@@ -47,7 +48,7 @@ GOLANGCILINT_VERSION ?= 2.12.2
 GO_REQUIRED_VERSION ?= 1.20
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider $(GO_PROJECT)/cmd/generator
 GO_LDFLAGS += -X $(GO_PROJECT)/internal/version.Version=$(VERSION)
-GO_SUBDIRS += cmd internal apis
+GO_SUBDIRS += cmd internal apis config
 -include build/makelib/golang.mk
 
 # ====================================================================================
@@ -103,6 +104,9 @@ build.init: $(UP)
 TERRAFORM := $(TOOLS_HOST_DIR)/terraform-$(TERRAFORM_VERSION)
 TERRAFORM_WORKDIR := $(WORK_DIR)/terraform
 TERRAFORM_PROVIDER_SCHEMA := config/schema.json
+TERRAFORM_PROVIDER_CHECKSUMS := $(ROOT_DIR)/config/terraform-provider-castai_SHA256SUMS
+TERRAFORM_PROVIDER_ARCHIVE := $(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_$(TERRAFORM_PROVIDER_VERSION)_$(SAFEHOST_PLATFORM).zip
+TERRAFORM_PROVIDER_MIRROR := $(WORK_DIR)/provider-mirror/registry.terraform.io/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_PROVIDER_VERSION)/$(SAFEHOST_PLATFORM)
 
 $(TERRAFORM):
 	@$(INFO) installing terraform $(HOSTOS)-$(HOSTARCH)
@@ -115,18 +119,24 @@ $(TERRAFORM):
 
 $(TERRAFORM_PROVIDER_SCHEMA): $(TERRAFORM)
 	@$(INFO) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
-	@mkdir -p $(TERRAFORM_WORKDIR)
+	@mkdir -p $(TERRAFORM_WORKDIR) $(TERRAFORM_PROVIDER_MIRROR)
+	@curl -fsSL $(TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX)/$(TERRAFORM_PROVIDER_ARCHIVE) -o $(WORK_DIR)/$(TERRAFORM_PROVIDER_ARCHIVE)
+	@cd $(WORK_DIR) && grep '  $(TERRAFORM_PROVIDER_ARCHIVE)$$' $(TERRAFORM_PROVIDER_CHECKSUMS) | $(SHA256SUM) -c -
+	@unzip -p $(WORK_DIR)/$(TERRAFORM_PROVIDER_ARCHIVE) $(TERRAFORM_NATIVE_PROVIDER_BINARY) > $(TERRAFORM_PROVIDER_MIRROR)/$(TERRAFORM_NATIVE_PROVIDER_BINARY)
+	@chmod +x $(TERRAFORM_PROVIDER_MIRROR)/$(TERRAFORM_NATIVE_PROVIDER_BINARY)
+	@printf 'provider_installation {\n  filesystem_mirror {\n    path = "$(WORK_DIR)/provider-mirror"\n  }\n}\n' > $(TERRAFORM_WORKDIR)/terraformrc.hcl
 	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"'"$(TERRAFORM_PROVIDER_SOURCE)"'","version":"'"$(TERRAFORM_PROVIDER_VERSION)"'"}}],"required_version":"'"$(TERRAFORM_VERSION)"'"}]}' > $(TERRAFORM_WORKDIR)/main.tf.json
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init -upgrade > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
+	@TF_CLI_CONFIG_FILE=$(TERRAFORM_WORKDIR)/terraformrc.hcl $(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init -upgrade > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
+	@TF_CLI_CONFIG_FILE=$(TERRAFORM_WORKDIR)/terraformrc.hcl $(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
 	@$(OK) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
 
 pull-docs:
-	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" ]; then \
-  		mkdir -p "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" && \
-		git clone -c advice.detachedHead=false --depth 1 --filter=blob:none --branch "v$(TERRAFORM_PROVIDER_VERSION)" --sparse "$(TERRAFORM_PROVIDER_REPO)" "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)"; \
+	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/.git" ]; then \
+		git init -q "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)"; \
 	fi
+	@git -C "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" fetch --depth 1 --filter=blob:none "$(TERRAFORM_PROVIDER_REPO)" "$(TERRAFORM_PROVIDER_DOCS_REF)"
 	@git -C "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" sparse-checkout set "$(TERRAFORM_DOCS_PATH)"
+	@git -C "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)" checkout --detach FETCH_HEAD
 
 generate.init: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs
 	@$(INFO) transforming nested_type attributes for upjet v1 compatibility

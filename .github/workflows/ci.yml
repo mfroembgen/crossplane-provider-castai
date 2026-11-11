@@ -6,7 +6,18 @@ on:
       - main
       - release-*
   pull_request: {}
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the reviewed v0.42.0 packages to the fork registry
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
 
 env:
   # Common versions
@@ -15,19 +26,8 @@ env:
   DOCKER_BUILDX_VERSION: 'v0.22.0'
   UP_VERSION: 'v0.38.4'
 
-  # Registry/Org names
-  CROSSPLANE_REGORG: 'ghcr.io/crossplane-contrib' # xpkg.crossplane.io/crossplane-contrib
-  UPBOUND_REGORG: 'xpkg.upbound.io/crossplane-contrib'
-
-  PROVIDER_REPO: crossplane-provider-castai
-
-  # Upbound registry specific variables
-  UP_DOMAIN: "https://upbound.io"
-
-  # Common users. We can't run a step 'if secrets.XXX != ""' but we can run a
-  # step 'if env.XXX != ""', so we copy these to succinctly test whether
-  # credentials have been provided before trying to run steps that need them.
-  UPBOUND_MARKETPLACE_PUSH_ROBOT_USR: ${{ secrets.XPKG_ACCESS_ID }}
+  PACKAGE_REPOSITORY: 'ghcr.io/mfroembgen/crossplane-provider-castai-api-parity'
+  PACKAGE_VERSION: 'v0.42.0'
 
 jobs:
   detect-noop:
@@ -50,18 +50,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(make go.cachedir)"
+        run: echo "cache=$(make go.cachedir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -94,12 +94,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
 
       - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -111,7 +111,7 @@ jobs:
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(make go.cachedir)"
+        run: echo "cache=$(make go.cachedir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -140,7 +140,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
 
@@ -148,13 +148,13 @@ jobs:
         run: git fetch --prune --unshallow
 
       - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "cache=$(make go.cachedir)" >> $GITHUB_OUTPUT
+        run: echo "cache=$(make go.cachedir)" >> "$GITHUB_OUTPUT"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -182,65 +182,25 @@ jobs:
           flags: unittests
           file: _output/tests/linux_amd64/coverage.txt
 
-  local-deploy:
+  build-packages:
     runs-on: ubuntu-24.04
-    needs: detect-noop
-    if: needs.detect-noop.outputs.noop != 'true'
-
+    needs: [lint, check-diff, unit-tests]
     steps:
       - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-
-      - name: Fetch History
-        run: git fetch --prune --unshallow
+          fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Find the Go Build Cache
-        id: go
-        run: echo "cache=$(make go.cachedir)" >> $GITHUB_OUTPUT
-
-      - name: Cache the Go Build Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ steps.go.outputs.cache }}
-          key: ${{ runner.os }}-build-unit-tests-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-build-unit-tests-
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .work/pkg
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-pkg-
-
-      - name: Vendor Dependencies
-        run: make vendor vendor.check
-
-      - name: Deploying locally built provider package
-        run: make local-deploy
-
-  publish-artifacts:
-    runs-on: ubuntu-24.04
-    needs: detect-noop
-    if: needs.detect-noop.outputs.noop != 'true'
-    outputs:
-      version: ${{ steps.version.outputs.VERSION }}
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
       - name: Setup QEMU
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
         with:
-          platforms: all
+          platforms: arm64
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
@@ -248,98 +208,118 @@ jobs:
           version: ${{ env.DOCKER_BUILDX_VERSION }}
           install: true
 
-      - name: Login to GHCR using PAT
+      - name: Build both packages
+        env:
+          BUILD_ARGS: --load
+        run: |
+          make -j2 BUILD_REGISTRY=local-build PLATFORMS="linux_amd64 linux_arm64" VERSION="$PACKAGE_VERSION" build.all
+
+      - name: Verify embedded executables and Terraform schema offline
+        run: |
+          set -euo pipefail
+          for arch in amd64 arm64; do
+            docker run --rm --network none --platform "linux/$arch" --entrypoint sh "local-build/crossplane-provider-castai-$arch" -ec '
+              test -x /usr/local/bin/provider
+              test -x "$TERRAFORM_NATIVE_PROVIDER_PATH"
+              /usr/local/bin/provider --help >/dev/null
+              mkdir -p /tmp/schema
+              printf "terraform {\n  required_providers {\n    castai = {\n      source = \"castai/castai\"\n      version = \"%s\"\n    }\n  }\n}\n" "$TERRAFORM_PROVIDER_VERSION" > /tmp/schema/main.tf
+              terraform -chdir=/tmp/schema init -backend=false -input=false -no-color >/dev/null
+              terraform -chdir=/tmp/schema providers schema -json
+            ' | jq -e '.provider_schemas["registry.terraform.io/castai/castai"].resource_schemas.castai_workload_scaling_policy.block.block_types.hpa_settings.block.block_types.native_hpa_spec' >/dev/null
+          done
+          grep -q 'hpaSettings:' package/crds/castai.upbound.io_scalingpolicies.yaml
+          grep -q 'nativeHpaSpec:' package/crds/castai.upbound.io_scalingpolicies.yaml
+
+      - name: Record package provenance
+        run: |
+          set -euo pipefail
+          cd _output/xpkg
+          test -s "linux_amd64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg"
+          test -s "linux_arm64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg"
+          sha256sum "linux_amd64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg" "linux_arm64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg" > SHA256SUMS
+          jq -n --arg source "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" \
+            --arg tree "$(git -C "$GITHUB_WORKSPACE" rev-parse 'HEAD^{tree}')" \
+            --arg version "$PACKAGE_VERSION" --arg run "$GITHUB_RUN_ID" \
+            '{sourceCommit: $source, sourceTree: $tree, packageVersion: $version, workflowRun: $run}' > provenance.json
+
+      - name: Upload packages and provenance
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            _output/xpkg/linux_amd64/crossplane-provider-castai-${{ env.PACKAGE_VERSION }}.xpkg
+            _output/xpkg/linux_arm64/crossplane-provider-castai-${{ env.PACKAGE_VERSION }}.xpkg
+            _output/xpkg/SHA256SUMS
+            _output/xpkg/provenance.json
+
+  publish-packages:
+    if: github.repository == 'mfroembgen/crossplane-provider-castai' && github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: build-packages
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: publish-castai-v0.42.0
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+
+      - name: Download packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packages-${{ github.sha }}
+          path: _output/xpkg
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Verify package provenance
+        run: |
+          set -euo pipefail
+          cd _output/xpkg
+          sha256sum -c SHA256SUMS
+          test "$(jq -r .sourceCommit provenance.json)" = "$GITHUB_SHA"
+          test "$(jq -r .packageVersion provenance.json)" = "$PACKAGE_VERSION"
+
+      - name: Setup crane
+        uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
+
+      - name: Login to GHCR
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          submodules: true
+      - name: Install the upstream package tool
+        run: make build.init
 
-      - name: Fetch History
-        run: git fetch --prune --unshallow
-
-      - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Find the Go Build Cache
-        id: go
-        run: echo "::set-output name=cache::$(make go.cachedir)"
-
-      - name: Cache the Go Build Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ${{ steps.go.outputs.cache }}
-          key: ${{ runner.os }}-build-publish-artifacts-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-build-publish-artifacts-
-
-      - name: Find the version
-        id: version
-        run: make common.buildvars >> $GITHUB_OUTPUT
-
-      - name: Cache Go Dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .work/pkg
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-pkg-
-
-      - name: Vendor Dependencies
-        run: make vendor vendor.check
-
-      - name: Build Artifacts
-        run: |-
-          make -j2 XPKG_REG_ORGS="${{ env.CROSSPLANE_REGORG }}" XPKG_REG_ORGS_NO_PROMOTE="${{ env.CROSSPLANE_REGORG }}" BRANCH_NAME="main" VERSION="${{ steps.version.outputs.VERSION }}" build.all
-        env:
-          # We're using docker buildx, which doesn't actually load the images it
-          # builds by default. Specifying --load does so.
-          BUILD_ARGS: "--load"
-
-      - name: Upload Artifacts to GitHub
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: output
-          path: _output/**
-
-      - name: Publish Artifacts
-        run: |-
-          make -j2 XPKG_REG_ORGS="${{ env.CROSSPLANE_REGORG }}" XPKG_REG_ORGS_NO_PROMOTE="${{ env.CROSSPLANE_REGORG }}" BRANCH_NAME="main" VERSION="${{ steps.version.outputs.VERSION }}" publish
-
-  mirror-to-xpkg-upbound-io:
-    needs: publish-artifacts
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-        with:
-          platforms: all
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-        with:
-          version: ${{ env.DOCKER_BUILDX_VERSION }}
-          install: true
-
-      - name: Setup crane
-        # crane will inherit credentials from `docker login`
-        uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
-
-      - name: Validate crane installation
-        run: crane version
-
-      - name: Login to Upbound
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
-        with:
-          registry: "xpkg.upbound.io"
-          username: ${{ secrets.XPKG_ACCESS_ID }}
-          password: ${{ secrets.XPKG_TOKEN }}
-
-      - name: Mirror to xpkg.upbound.io
+      - name: Refuse to replace an existing version
         run: |
-          crane copy ${{ env.CROSSPLANE_REGORG }}/${{ env.PROVIDER_REPO }}:${{ needs.publish-artifacts.outputs.version }} ${{ env.UPBOUND_REGORG }}/${{ env.PROVIDER_REPO }}:${{ needs.publish-artifacts.outputs.version }} --allow-nondistributable-artifacts
+          set -euo pipefail
+          crane ls "$PACKAGE_REPOSITORY" > "$RUNNER_TEMP/existing-tags"
+          if grep -Fxq "$PACKAGE_VERSION" "$RUNNER_TEMP/existing-tags"; then
+            echo "Refusing to replace $PACKAGE_REPOSITORY:$PACKAGE_VERSION" >&2
+            exit 1
+          fi
+
+      - name: Publish the reviewed packages
+        run: |
+          set -euo pipefail
+          up_cli=$(find .cache/tools -type f -name "up-$UP_VERSION" -print -quit)
+          test -x "$up_cli"
+          "$up_cli" xpkg push \
+            --package "_output/xpkg/linux_amd64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg" \
+            --package "_output/xpkg/linux_arm64/crossplane-provider-castai-$PACKAGE_VERSION.xpkg" \
+            "$PACKAGE_REPOSITORY:$PACKAGE_VERSION"
+          digest=$(crane digest "$PACKAGE_REPOSITORY:$PACKAGE_VERSION")
+          printf '%s@%s\n' "$PACKAGE_REPOSITORY" "$digest" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -59,17 +59,20 @@ def relax_conditionally_required_blocks(resources):
     """
     rules = {
         "castai_edge_location": ["aws", "gcp", "nebius", "oci"],
+        # Required fields inside an optional list must not make its optional
+        # cloud parent mandatory in the generated Crossplane API.
+        "castai_edge_configuration": ["nebius.filesystems"],
     }
 
     relaxed = []
     for res_name, block_names in rules.items():
         if res_name not in resources:
             continue
-        block_types = resources[res_name].get("block", {}).get("block_types", {})
         for bname in block_names:
-            if bname not in block_types:
-                continue
-            inner_attrs = block_types[bname].get("block", {}).get("attributes", {})
+            block = resources[res_name].get("block", {})
+            for part in bname.split("."):
+                block = block.get("block_types", {}).get(part, {}).get("block", {})
+            inner_attrs = block.get("attributes", {})
             fields = []
             for fname, fattr in inner_attrs.items():
                 if fattr.get("required"):
