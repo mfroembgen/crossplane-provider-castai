@@ -54,6 +54,27 @@ spec:
     - container-2
     hpaConverters:
     - type: AVERAGE_VALUE_FROM_ORIGINAL_REQUESTS
+    hpaSettings:
+    - managementOption: MANAGED
+      nativeHpaSpec:
+      - behavior:
+        - scaleDown:
+          - policies:
+            - periodSeconds: 60
+              type: PODS_SCALING_POLICY
+              value: 1
+            selectPolicy: MAX_CHANGE_POLICY_SELECT
+            stabilizationWindowSeconds: 300
+        maxReplicas: 20
+        metrics:
+        - resource:
+          - name: cpu
+            target:
+            - type: UTILIZATION
+              value: "80"
+          type: RESOURCE
+        minReplicas: 2
+      takeOwnership: true
     jvm:
     - memory:
       - optimization: true
