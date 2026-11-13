@@ -13701,6 +13701,16 @@ func (in *GkeInitParameters) DeepCopyInto(out *GkeInitParameters) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ProvisionedIops != nil {
+		in, out := &in.ProvisionedIops, &out.ProvisionedIops
+		*out = new(float64)
+		**out = **in
+	}
+	if in.ProvisionedThroughput != nil {
+		in, out := &in.ProvisionedThroughput, &out.ProvisionedThroughput
+		*out = new(float64)
+		**out = **in
+	}
 	if in.SecondaryBootDisks != nil {
 		in, out := &in.SecondaryBootDisks, &out.SecondaryBootDisks
 		*out = make([]SecondaryBootDisksInitParameters, len(*in))
@@ -13871,6 +13881,16 @@ func (in *GkeObservation) DeepCopyInto(out *GkeObservation) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ProvisionedIops != nil {
+		in, out := &in.ProvisionedIops, &out.ProvisionedIops
+		*out = new(float64)
+		**out = **in
+	}
+	if in.ProvisionedThroughput != nil {
+		in, out := &in.ProvisionedThroughput, &out.ProvisionedThroughput
+		*out = new(float64)
+		**out = **in
+	}
 	if in.SecondaryBootDisks != nil {
 		in, out := &in.SecondaryBootDisks, &out.SecondaryBootDisks
 		*out = make([]SecondaryBootDisksObservation, len(*in))
@@ -13952,6 +13972,16 @@ func (in *GkeParameters) DeepCopyInto(out *GkeParameters) {
 	if in.OnHostMaintenance != nil {
 		in, out := &in.OnHostMaintenance, &out.OnHostMaintenance
 		*out = new(string)
+		**out = **in
+	}
+	if in.ProvisionedIops != nil {
+		in, out := &in.ProvisionedIops, &out.ProvisionedIops
+		*out = new(float64)
+		**out = **in
+	}
+	if in.ProvisionedThroughput != nil {
+		in, out := &in.ProvisionedThroughput, &out.ProvisionedThroughput
+		*out = new(float64)
 		**out = **in
 	}
 	if in.SecondaryBootDisks != nil {
