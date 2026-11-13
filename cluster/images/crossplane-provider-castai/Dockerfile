@@ -4,6 +4,11 @@ RUN apk --no-cache add ca-certificates bash
 ARG TARGETOS
 ARG TARGETARCH
 ARG CROSSPLANE_PROVIDER_VERSION
+ARG CROSSPLANE_PROVIDER_REVISION
+
+LABEL org.opencontainers.image.source="https://github.com/mfroembgen/crossplane-provider-castai" \
+      org.opencontainers.image.version="${CROSSPLANE_PROVIDER_VERSION}" \
+      org.opencontainers.image.revision="${CROSSPLANE_PROVIDER_REVISION}"
 
 ADD "bin/${TARGETOS}_${TARGETARCH}/provider" /usr/local/bin/provider
 
