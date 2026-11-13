@@ -203,6 +203,10 @@ type EksInitParameters struct {
 	// Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
 	MaxPodsPerNodeFormula *string `json:"maxPodsPerNodeFormula,omitempty" tf:"max_pods_per_node_formula,omitempty"`
 
+	// (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	// Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	NestedVirtualisation *string `json:"nestedVirtualisation,omitempty" tf:"nested_virtualisation,omitempty"`
+
 	// (String) Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
 	// Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
 	NodeGroupArn *string `json:"nodeGroupArn,omitempty" tf:"node_group_arn,omitempty"`
@@ -273,6 +277,10 @@ type EksObservation struct {
 	// (String) Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
 	// Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
 	MaxPodsPerNodeFormula *string `json:"maxPodsPerNodeFormula,omitempty" tf:"max_pods_per_node_formula,omitempty"`
+
+	// (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	// Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	NestedVirtualisation *string `json:"nestedVirtualisation,omitempty" tf:"nested_virtualisation,omitempty"`
 
 	// (String) Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
 	// Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
@@ -353,6 +361,11 @@ type EksParameters struct {
 	// Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
 	// +kubebuilder:validation:Optional
 	MaxPodsPerNodeFormula *string `json:"maxPodsPerNodeFormula,omitempty" tf:"max_pods_per_node_formula,omitempty"`
+
+	// (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	// Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+	// +kubebuilder:validation:Optional
+	NestedVirtualisation *string `json:"nestedVirtualisation,omitempty" tf:"nested_virtualisation,omitempty"`
 
 	// (String) Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
 	// Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality

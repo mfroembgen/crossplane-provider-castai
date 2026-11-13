@@ -162,7 +162,7 @@ type ControlPlaneParameters struct {
 
 type EdgeLocationAwsInitParameters struct {
 
-	// (String, Sensitive) AWS access key ID
+	// only) AWS access key ID
 	// AWS access key ID
 	AccessKeyIDWoSecretRef *v1.SecretKeySelector `json:"accessKeyIdWoSecretRef,omitempty" tf:"-"`
 
@@ -182,7 +182,7 @@ type EdgeLocationAwsInitParameters struct {
 	// AWS IAM role ARN used for Google OIDC federation impersonation
 	RoleArn *string `json:"roleArn,omitempty" tf:"role_arn,omitempty"`
 
-	// (String, Sensitive) AWS secret access key
+	// only) AWS secret access key
 	// AWS secret access key
 	SecretAccessKeyWoSecretRef *v1.SecretKeySelector `json:"secretAccessKeyWoSecretRef,omitempty" tf:"-"`
 
@@ -250,7 +250,7 @@ type EdgeLocationAwsObservation struct {
 
 type EdgeLocationAwsParameters struct {
 
-	// (String, Sensitive) AWS access key ID
+	// only) AWS access key ID
 	// AWS access key ID
 	// +kubebuilder:validation:Optional
 	AccessKeyIDWoSecretRef *v1.SecretKeySelector `json:"accessKeyIdWoSecretRef,omitempty" tf:"-"`
@@ -275,7 +275,7 @@ type EdgeLocationAwsParameters struct {
 	// +kubebuilder:validation:Optional
 	RoleArn *string `json:"roleArn,omitempty" tf:"role_arn,omitempty"`
 
-	// (String, Sensitive) AWS secret access key
+	// only) AWS secret access key
 	// AWS secret access key
 	// +kubebuilder:validation:Optional
 	SecretAccessKeyWoSecretRef *v1.SecretKeySelector `json:"secretAccessKeyWoSecretRef,omitempty" tf:"-"`
@@ -318,7 +318,7 @@ type EdgeLocationCustomParameters struct {
 
 type EdgeLocationGCPInitParameters struct {
 
-	// (String, Sensitive) Base64 encoded service account JSON for provisioning edge resources
+	// only) Base64 encoded service account JSON for provisioning edge resources
 	// Base64 encoded service account JSON for provisioning edge resources
 	ClientServiceAccountJSONBase64WoSecretRef *v1.SecretKeySelector `json:"clientServiceAccountJsonBase64WoSecretRef,omitempty" tf:"-"`
 
@@ -386,7 +386,7 @@ type EdgeLocationGCPObservation struct {
 
 type EdgeLocationGCPParameters struct {
 
-	// (String, Sensitive) Base64 encoded service account JSON for provisioning edge resources
+	// only) Base64 encoded service account JSON for provisioning edge resources
 	// Base64 encoded service account JSON for provisioning edge resources
 	// +kubebuilder:validation:Optional
 	ClientServiceAccountJSONBase64WoSecretRef *v1.SecretKeySelector `json:"clientServiceAccountJsonBase64WoSecretRef,omitempty" tf:"-"`
@@ -671,11 +671,11 @@ type EdgeLocationOciInitParameters struct {
 	// OCI compartment ID of edge location
 	CompartmentID *string `json:"compartmentId,omitempty" tf:"compartment_id,omitempty"`
 
-	// (String, Sensitive) API key fingerprint
+	// only) API key fingerprint
 	// API key fingerprint
 	FingerprintWoSecretRef *v1.SecretKeySelector `json:"fingerprintWoSecretRef,omitempty" tf:"-"`
 
-	// (String, Sensitive) Base64 encoded API private key
+	// only) Base64 encoded API private key
 	// Base64 encoded API private key
 	PrivateKeyBase64WoSecretRef *v1.SecretKeySelector `json:"privateKeyBase64WoSecretRef,omitempty" tf:"-"`
 
@@ -691,7 +691,7 @@ type EdgeLocationOciInitParameters struct {
 	// OCI tenancy ID of the account
 	TenancyID *string `json:"tenancyId,omitempty" tf:"tenancy_id,omitempty"`
 
-	// (String) User ID used to authenticate OCI
+	// only) User ID used to authenticate OCI
 	// User ID used to authenticate OCI
 	UserIDWo *string `json:"userIdWo,omitempty" tf:"user_id_wo,omitempty"`
 
@@ -702,6 +702,10 @@ type EdgeLocationOciInitParameters struct {
 	// (String) OCI virtual cloud network ID
 	// OCI virtual cloud network ID
 	VcnID *string `json:"vcnId,omitempty" tf:"vcn_id,omitempty"`
+
+	// (Boolean) Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	// Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	VcnPeered *bool `json:"vcnPeered,omitempty" tf:"vcn_peered,omitempty"`
 }
 
 type EdgeLocationOciObservation struct {
@@ -722,7 +726,7 @@ type EdgeLocationOciObservation struct {
 	// OCI tenancy ID of the account
 	TenancyID *string `json:"tenancyId,omitempty" tf:"tenancy_id,omitempty"`
 
-	// (String) User ID used to authenticate OCI
+	// only) User ID used to authenticate OCI
 	// User ID used to authenticate OCI
 	UserIDWo *string `json:"userIdWo,omitempty" tf:"user_id_wo,omitempty"`
 
@@ -733,6 +737,10 @@ type EdgeLocationOciObservation struct {
 	// (String) OCI virtual cloud network ID
 	// OCI virtual cloud network ID
 	VcnID *string `json:"vcnId,omitempty" tf:"vcn_id,omitempty"`
+
+	// (Boolean) Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	// Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	VcnPeered *bool `json:"vcnPeered,omitempty" tf:"vcn_peered,omitempty"`
 }
 
 type EdgeLocationOciParameters struct {
@@ -742,12 +750,12 @@ type EdgeLocationOciParameters struct {
 	// +kubebuilder:validation:Optional
 	CompartmentID *string `json:"compartmentId,omitempty" tf:"compartment_id,omitempty"`
 
-	// (String, Sensitive) API key fingerprint
+	// only) API key fingerprint
 	// API key fingerprint
 	// +kubebuilder:validation:Optional
 	FingerprintWoSecretRef *v1.SecretKeySelector `json:"fingerprintWoSecretRef,omitempty" tf:"-"`
 
-	// (String, Sensitive) Base64 encoded API private key
+	// only) Base64 encoded API private key
 	// Base64 encoded API private key
 	// +kubebuilder:validation:Optional
 	PrivateKeyBase64WoSecretRef *v1.SecretKeySelector `json:"privateKeyBase64WoSecretRef,omitempty" tf:"-"`
@@ -767,7 +775,7 @@ type EdgeLocationOciParameters struct {
 	// +kubebuilder:validation:Optional
 	TenancyID *string `json:"tenancyId,omitempty" tf:"tenancy_id,omitempty"`
 
-	// (String) User ID used to authenticate OCI
+	// only) User ID used to authenticate OCI
 	// User ID used to authenticate OCI
 	// +kubebuilder:validation:Optional
 	UserIDWo *string `json:"userIdWo,omitempty" tf:"user_id_wo,omitempty"`
@@ -781,6 +789,11 @@ type EdgeLocationOciParameters struct {
 	// OCI virtual cloud network ID
 	// +kubebuilder:validation:Optional
 	VcnID *string `json:"vcnId,omitempty" tf:"vcn_id,omitempty"`
+
+	// (Boolean) Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	// Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
+	// +kubebuilder:validation:Optional
+	VcnPeered *bool `json:"vcnPeered,omitempty" tf:"vcn_peered,omitempty"`
 }
 
 type EdgeLocationParameters struct {

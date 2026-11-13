@@ -266,6 +266,35 @@ type EdgeConfigurationParameters struct {
 	UserDataBase64 *string `json:"userDataBase64,omitempty" tf:"user_data_base64,omitempty"`
 }
 
+type FilesystemsInitParameters struct {
+
+	// ID of an existing Nebius shared filesystem. Example: computefilesystem-e00yt3n68egnzr50nz
+	FilesystemID *string `json:"filesystemId,omitempty" tf:"filesystem_id,omitempty"`
+
+	// Mount path inside the VM. Must be an absolute path (start with `/`).
+	MountPath *string `json:"mountPath,omitempty" tf:"mount_path,omitempty"`
+}
+
+type FilesystemsObservation struct {
+
+	// ID of an existing Nebius shared filesystem. Example: computefilesystem-e00yt3n68egnzr50nz
+	FilesystemID *string `json:"filesystemId,omitempty" tf:"filesystem_id,omitempty"`
+
+	// Mount path inside the VM. Must be an absolute path (start with `/`).
+	MountPath *string `json:"mountPath,omitempty" tf:"mount_path,omitempty"`
+}
+
+type FilesystemsParameters struct {
+
+	// ID of an existing Nebius shared filesystem. Example: computefilesystem-e00yt3n68egnzr50nz
+	// +kubebuilder:validation:Optional
+	FilesystemID *string `json:"filesystemId,omitempty" tf:"filesystem_id,omitempty"`
+
+	// Mount path inside the VM. Must be an absolute path (start with `/`).
+	// +kubebuilder:validation:Optional
+	MountPath *string `json:"mountPath,omitempty" tf:"mount_path,omitempty"`
+}
+
 type GCPInitParameters struct {
 
 	// Boot disk size in GiB
@@ -313,6 +342,9 @@ type NebiusInitParameters struct {
 	// Boot disk size in GiB
 	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
 
+	// Shared filesystems to attach to each VM created from this configuration
+	Filesystems []FilesystemsInitParameters `json:"filesystems,omitempty" tf:"filesystems,omitempty"`
+
 	// GPU cluster info
 	GpuCluster *string `json:"gpuCluster,omitempty" tf:"gpu_cluster,omitempty"`
 
@@ -331,6 +363,9 @@ type NebiusObservation struct {
 
 	// Boot disk size in GiB
 	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
+
+	// Shared filesystems to attach to each VM created from this configuration
+	Filesystems []FilesystemsObservation `json:"filesystems,omitempty" tf:"filesystems,omitempty"`
 
 	// GPU cluster info
 	GpuCluster *string `json:"gpuCluster,omitempty" tf:"gpu_cluster,omitempty"`
@@ -351,6 +386,10 @@ type NebiusParameters struct {
 	// Boot disk size in GiB
 	// +kubebuilder:validation:Optional
 	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
+
+	// Shared filesystems to attach to each VM created from this configuration
+	// +kubebuilder:validation:Optional
+	Filesystems []FilesystemsParameters `json:"filesystems,omitempty" tf:"filesystems,omitempty"`
 
 	// GPU cluster info
 	// +kubebuilder:validation:Optional

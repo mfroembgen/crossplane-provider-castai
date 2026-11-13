@@ -359,6 +359,11 @@ spec:
                             (String) Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
                             Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
                           type: string
+                        nestedVirtualisation:
+                          description: |-
+                            (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+                            Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+                          type: string
                         nodeGroupArn:
                           description: |-
                             (String) Cluster's node group ARN used for CAST provisioned node pools. Required for hibernate/resume functionality
@@ -894,6 +899,11 @@ spec:
                           description: |-
                             (String) Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
                             Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
+                          type: string
+                        nestedVirtualisation:
+                          description: |-
+                            (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+                            Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
                           type: string
                         nodeGroupArn:
                           description: |-
@@ -1522,6 +1532,11 @@ spec:
                           description: |-
                             (String) Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
                             Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .
+                          type: string
+                        nestedVirtualisation:
+                          description: |-
+                            (String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
+                            Controls EC2 nested virtualisation on provisioned nodes. Allowed values: `enabled`, `disabled`. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.
                           type: string
                         nodeGroupArn:
                           description: |-
