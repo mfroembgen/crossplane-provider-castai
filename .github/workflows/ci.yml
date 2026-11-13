@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish the reviewed v0.42.0 packages to the fork registry
+        description: Publish the reviewed v0.42.0-tf-9.20.0.1 packages to the fork registry
         type: boolean
         default: false
         required: true
@@ -27,7 +27,7 @@ env:
   UP_VERSION: 'v0.38.4'
 
   PACKAGE_REPOSITORY: 'ghcr.io/mfroembgen/crossplane-provider-castai-api-parity'
-  PACKAGE_VERSION: 'v0.42.0'
+  PACKAGE_VERSION: 'v0.42.0-tf-9.20.0.1'
 
 jobs:
   detect-noop:
@@ -260,7 +260,7 @@ jobs:
     needs: build-packages
     runs-on: ubuntu-24.04
     concurrency:
-      group: publish-castai-v0.42.0
+      group: publish-castai-v0.42.0-tf-9.20.0.1
       cancel-in-progress: false
     permissions:
       contents: read
