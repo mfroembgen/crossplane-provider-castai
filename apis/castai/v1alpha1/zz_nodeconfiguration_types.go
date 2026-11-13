@@ -19,8 +19,8 @@ type AksInitParameters struct {
 	// Controls SR-IOV accelerated networking on the node NIC. Allowed values: `disabled` (force off regardless of SKU capability). When omitted, the field is not sent to the API and the API default applies.
 	AcceleratedNetworking *string `json:"acceleratedNetworking,omitempty" tf:"accelerated_networking,omitempty"`
 
-	// linux,windows2019,windows2022)
-	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022)
+	// linux,windows2019,windows2022,windows2025)
+	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022,windows2025)
 	AksImageFamily *string `json:"aksImageFamily,omitempty" tf:"aks_image_family,omitempty"`
 
 	// (List of String) Application security groups to be used for provisioned nodes
@@ -66,8 +66,8 @@ type AksObservation struct {
 	// Controls SR-IOV accelerated networking on the node NIC. Allowed values: `disabled` (force off regardless of SKU capability). When omitted, the field is not sent to the API and the API default applies.
 	AcceleratedNetworking *string `json:"acceleratedNetworking,omitempty" tf:"accelerated_networking,omitempty"`
 
-	// linux,windows2019,windows2022)
-	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022)
+	// linux,windows2019,windows2022,windows2025)
+	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022,windows2025)
 	AksImageFamily *string `json:"aksImageFamily,omitempty" tf:"aks_image_family,omitempty"`
 
 	// (List of String) Application security groups to be used for provisioned nodes
@@ -114,8 +114,8 @@ type AksParameters struct {
 	// +kubebuilder:validation:Optional
 	AcceleratedNetworking *string `json:"acceleratedNetworking,omitempty" tf:"accelerated_networking,omitempty"`
 
-	// linux,windows2019,windows2022)
-	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022)
+	// linux,windows2019,windows2022,windows2025)
+	// Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022,windows2025)
 	// +kubebuilder:validation:Optional
 	AksImageFamily *string `json:"aksImageFamily,omitempty" tf:"aks_image_family,omitempty"`
 
@@ -463,6 +463,10 @@ type GkeInitParameters struct {
 	// Maintenance behavior of the instances. If not set, the default value for spot nodes is terminate, and for non-spot nodes, it is migrate.
 	OnHostMaintenance *string `json:"onHostMaintenance,omitempty" tf:"on_host_maintenance,omitempty"`
 
+	// (Block List) Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes. (see below for nested schema)
+	// Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes.
+	SecondaryBootDisks []SecondaryBootDisksInitParameters `json:"secondaryBootDisks,omitempty" tf:"secondary_boot_disks,omitempty"`
+
 	// (Block List, Max: 1) Secondary IP range configuration for pods in GKE nodes (see below for nested schema)
 	// Secondary IP range configuration for pods in GKE nodes
 	SecondaryIPRange []SecondaryIPRangeInitParameters `json:"secondaryIpRange,omitempty" tf:"secondary_ip_range,omitempty"`
@@ -544,6 +548,10 @@ type GkeObservation struct {
 	// Maintenance behavior of the instances. If not set, the default value for spot nodes is terminate, and for non-spot nodes, it is migrate.
 	OnHostMaintenance *string `json:"onHostMaintenance,omitempty" tf:"on_host_maintenance,omitempty"`
 
+	// (Block List) Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes. (see below for nested schema)
+	// Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes.
+	SecondaryBootDisks []SecondaryBootDisksObservation `json:"secondaryBootDisks,omitempty" tf:"secondary_boot_disks,omitempty"`
+
 	// (Block List, Max: 1) Secondary IP range configuration for pods in GKE nodes (see below for nested schema)
 	// Secondary IP range configuration for pods in GKE nodes
 	SecondaryIPRange []SecondaryIPRangeObservation `json:"secondaryIpRange,omitempty" tf:"secondary_ip_range,omitempty"`
@@ -595,6 +603,11 @@ type GkeParameters struct {
 	// Maintenance behavior of the instances. If not set, the default value for spot nodes is terminate, and for non-spot nodes, it is migrate.
 	// +kubebuilder:validation:Optional
 	OnHostMaintenance *string `json:"onHostMaintenance,omitempty" tf:"on_host_maintenance,omitempty"`
+
+	// (Block List) Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes. (see below for nested schema)
+	// Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes.
+	// +kubebuilder:validation:Optional
+	SecondaryBootDisks []SecondaryBootDisksParameters `json:"secondaryBootDisks,omitempty" tf:"secondary_boot_disks,omitempty"`
 
 	// (Block List, Max: 1) Secondary IP range configuration for pods in GKE nodes (see below for nested schema)
 	// Secondary IP range configuration for pods in GKE nodes
@@ -1027,6 +1040,41 @@ type PublicIPParameters struct {
 	// +kubebuilder:validation:Optional
 	// +mapType=granular
 	Tags map[string]*string `json:"tags,omitempty" tf:"tags,omitempty"`
+}
+
+type SecondaryBootDisksInitParameters struct {
+
+	// project shorthand global/images/NAME.
+	// Image the disk is initialized from: a GKE image reference, projects/PROJECT/global/images/NAME or the same-project shorthand global/images/NAME.
+	DiskImage *string `json:"diskImage,omitempty" tf:"disk_image,omitempty"`
+
+	// arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	// Mode of the secondary boot disk. MODE_UNSPECIFIED (default) - arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	Mode *string `json:"mode,omitempty" tf:"mode,omitempty"`
+}
+
+type SecondaryBootDisksObservation struct {
+
+	// project shorthand global/images/NAME.
+	// Image the disk is initialized from: a GKE image reference, projects/PROJECT/global/images/NAME or the same-project shorthand global/images/NAME.
+	DiskImage *string `json:"diskImage,omitempty" tf:"disk_image,omitempty"`
+
+	// arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	// Mode of the secondary boot disk. MODE_UNSPECIFIED (default) - arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	Mode *string `json:"mode,omitempty" tf:"mode,omitempty"`
+}
+
+type SecondaryBootDisksParameters struct {
+
+	// project shorthand global/images/NAME.
+	// Image the disk is initialized from: a GKE image reference, projects/PROJECT/global/images/NAME or the same-project shorthand global/images/NAME.
+	// +kubebuilder:validation:Optional
+	DiskImage *string `json:"diskImage" tf:"disk_image,omitempty"`
+
+	// arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	// Mode of the secondary boot disk. MODE_UNSPECIFIED (default) - arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.
+	// +kubebuilder:validation:Optional
+	Mode *string `json:"mode,omitempty" tf:"mode,omitempty"`
 }
 
 type SecondaryIPRangeInitParameters struct {

@@ -180,6 +180,8 @@ resources:
                 subscription_id: data.azurerm_subscription.current.subscription_id
                 tenant_id: data.azurerm_subscription.current.tenant_id
         argumentDocs:
+            ca_cert_config: '(Block List, Max: 1) CA certificates to add to the node''s trust store. (see below for nested schema)'
+            ca_certs: (List of String) List of base64-encoded CA certificates.
             client_id: (String) Azure AD application ID that is created and used by CAST AI.
             client_secret: (String, Sensitive) Azure AD application password that will be used by CAST AI.
             cluster_token: (String, Sensitive) CAST AI cluster token.
@@ -242,112 +244,68 @@ resources:
               # Importing via direct allocation group ID is also possible.
               # Will use the default organization ID, that is associated with the API token.
               terraform import 'castai_allocation_group.my_allocation_group' e5ee784d-2c4b-4820-ab4e-16e4b81534a4
-    castai_autoscaler:
+    castai_autoscaler_policies:
         subCategory: ""
-        description: CAST AI autoscaler resource to manage autoscaler settings
-        name: castai_autoscaler
-        title: castai_autoscaler Resource - terraform-provider-castai
+        description: CAST AI autoscaler policies V2 resource to manage cluster autoscaling policies.
+        name: castai_autoscaler_policies
+        title: castai_autoscaler_policies Resource - terraform-provider-castai
         examples:
-            - name: castai_autoscaler_policy
+            - name: policies
               manifest: |-
                 {
-                  "autoscaler_settings": [
+                  "cluster_id": "${castai_eks_cluster.test.id}",
+                  "cluster_limits": [
                     {
-                      "cluster_limits": [
+                      "cpu": [
                         {
-                          "cpu": [
-                            {
-                              "max_cores": 10,
-                              "min_cores": 1
-                            }
-                          ],
-                          "enabled": true
+                          "max_cores": 10
                         }
                       ],
+                      "enabled": true
+                    }
+                  ],
+                  "enabled": true,
+                  "node_downscaler": [
+                    {
+                      "empty_nodes_delay": "90s",
+                      "empty_nodes_enabled": true
+                    }
+                  ],
+                  "scoped_mode": false,
+                  "unschedulable_pods": [
+                    {
                       "enabled": true,
-                      "is_scoped_mode": false,
-                      "node_downscaler": [
-                        {
-                          "empty_nodes": [
-                            {
-                              "delay_seconds": 90,
-                              "enabled": true
-                            }
-                          ],
-                          "enabled": true,
-                          "evictor": [
-                            {
-                              "aggressive_mode": false,
-                              "cycle_interval": "60s",
-                              "dry_run": false,
-                              "enabled": true,
-                              "ignore_pod_disruption_budgets": false,
-                              "node_grace_period_minutes": 10,
-                              "pod_eviction_failure_back_off_interval": "30s",
-                              "scoped_mode": false
-                            }
-                          ]
-                        }
-                      ],
-                      "node_templates_partial_matching_enabled": false,
-                      "unschedulable_pods": [
+                      "partial_template_matching_enabled": true,
+                      "pod_pinner": [
                         {
                           "enabled": true
                         }
                       ]
                     }
-                  ],
-                  "cluster_id": "${castai_eks_cluster.test.id}"
+                  ]
                 }
               references:
                 cluster_id: castai_eks_cluster.test.id
         argumentDocs:
-            aggressive_mode: (Boolean) enable/disable aggressive mode. By default, Evictor does not target nodes that are running unreplicated pods. This mode will make the Evictor start considering application with just a single replica.
-            autoscaler_policies: (String, Deprecated) computed value to store full policies configuration
-            autoscaler_policies_json: (String, Deprecated) autoscaler policies JSON string to override current autoscaler settings
-            autoscaler_settings: '(Block List, Max: 1) autoscaler policy definitions to override current autoscaler settings (see below for nested schema)'
-            cluster_id: (String) CAST AI cluster id
-            cluster_limits: '(Block List, Max: 1) defines minimum and maximum amount of CPU the cluster can have. (see below for nested schema)'
-            cpu: '(Block List, Max: 1) defines the minimum and maximum amount of CPUs for cluster''s worker nodes. (see below for nested schema)'
-            cpu_percentage: (Number) defines percentage of additional CPU capacity to be added.
-            create: (String)
-            custom_instances_enabled: (Boolean, Deprecated) enable/disable custom instances policy.
-            cycle_interval: (String) configure the interval duration between Evictor operations. This property can be used to lower or raise the frequency of the Evictor's find-and-drain operations.
-            delay_seconds: (Number) period (in seconds) to wait before removing the node. Might be useful to control the aggressiveness of the downscaler.
-            dry_run: (Boolean) enable/disable dry-run. This property allows you to prevent the Evictor from carrying any operations out and preview the actions it would take.
-            empty_nodes: '(Block List, Max: 1) defines whether Node Downscaler should opt in for removing empty worker nodes when possible. (see below for nested schema)'
-            enabled: (Boolean) enable/disable autoscaler policies
-            evictor: '(Block List, Max: 1) defines the CAST AI Evictor component settings. Evictor watches the pods running in your cluster and looks for ways to compact them into fewer nodes, making nodes empty, which will be removed by the empty worker nodes policy. (see below for nested schema)'
-            headroom: '(Block List, Max: 1, Deprecated) additional headroom based on cluster''s total available capacity for on-demand nodes. (see below for nested schema)'
-            headroom_spot: '(Block List, Max: 1, Deprecated) additional headroom based on cluster''s total available capacity for spot nodes. (see below for nested schema)'
-            id: (String) The ID of this resource.
-            ignore_pod_disruption_budgets: (Boolean) if enabled then Evictor will attempt to evict pods that have pod disruption budgets configured.
-            is_scoped_mode: (Boolean) run autoscaler in scoped mode. Only marked pods and nodes will be considered.
-            max_cores: (Number) defines the maximum allowed amount of vCPUs in the whole cluster.
-            max_cpu_cores: (Number) defines max CPU cores for the node to pick.
-            max_ram_mib: (Number) defines max RAM in MiB for the node to pick.
-            max_reclaim_rate: (Number, Deprecated) max allowed reclaim rate when choosing spot instance type. E.g. if the value is 10%, instance types having 10% or higher reclaim rate will not be considered. Set to zero to use all instance types regardless of reclaim rate.
-            memory_percentage: (Number) defines percentage of additional memory capacity to be added.
-            min_cores: (Number, Deprecated) defines the minimum allowed amount of CPUs in the whole cluster. This field is deprecated.
-            min_cpu_cores: (Number) defines min CPU cores for the node to pick.
-            min_ram_mib: (Number) defines min RAM in MiB for the node to pick.
-            node_constraints: '(Block List, Max: 1, Deprecated) defines the node constraints that will be applied when autoscaling with Unschedulable Pods policy. (see below for nested schema)'
-            node_downscaler: '(Block List, Max: 1) node downscaler defines policies for removing nodes based on the configured conditions. (see below for nested schema)'
-            node_grace_period_minutes: (Number) configure the node grace period which controls the duration which must pass after a node has been created before Evictor starts considering that node.
-            node_templates_partial_matching_enabled: (Boolean) marks whether partial matching should be used when deciding which custom node template to select.
-            pod_eviction_failure_back_off_interval: (String) configure the pod eviction failure back off interval. If pod eviction fails then Evictor will attempt to evict it again after the amount of time specified here.
-            pod_pinner: '(Block List, Max: 1) defines the Cast AI Pod Pinner components settings. (see below for nested schema)'
-            scoped_mode: (Boolean) enable/disable scoped mode. By default, Evictor targets all nodes in the cluster. This mode will constrain it to just the nodes which were created by CAST AI.
-            spot_backup_restore_rate_seconds: (Number) defines interval on how often spot backups restore to real spot should occur.
-            spot_backups: '(Block List, Max: 1, Deprecated) policy defining whether autoscaler can use spot backups instead of spot instances when spot instances are not available. (see below for nested schema)'
-            spot_diversity_enabled: (Boolean, Deprecated) enable/disable spot diversity policy. When enabled, autoscaler will try to balance between diverse and cost optimal instance types.
-            spot_diversity_price_increase_limit: (Number, Deprecated) allowed node configuration price increase when diversifying instance types. E.g. if the value is 10%, then the overall price of diversified instance types can be 10% higher than the price of the optimal configuration.
-            spot_instances: '(Block List, Max: 1, Deprecated) policy defining whether autoscaler can use spot instances for provisioning additional workloads. (see below for nested schema)'
-            spot_interruption_predictions: '(Block List, Max: 1, Deprecated) configure the handling of SPOT interruption predictions. (see below for nested schema)'
-            spot_interruption_predictions_type: (String, Deprecated) define the type of the spot interruption prediction to handle. The value "AWSRebalanceRecommendations" is deprecated; use "CASTAIInterruptionPredictions".
-            timeouts: (Block, Optional) (see below for nested schema)
-            unschedulable_pods: '(Block List, Max: 1) policy defining autoscaler''s behavior when unschedulable pods were detected. (see below for nested schema)'
-            update: (String)
+            cluster_id: (String) CAST AI cluster id.
+            cluster_limits: (List of Object) Defines minimum and maximum amount of CPU the cluster can have. cluster_limits { enabled = true, cpu { max_cores = 100, min_cores = 1 } }. (see below for nested schema)
+            cpu: (List of Object) (see below for nested schema)
+            empty_nodes_delay: (String)
+            empty_nodes_enabled: (Boolean)
+            enabled: (Boolean) Enable/disable all policies (global master switch).
+            id: (String) The ID of this resource, equal to the cluster id.
+            max_cores: (Number)
+            min_cores: (Number)
+            node_downscaler: (List of Object) Node Downscaler defines policies for removing nodes based on the configured conditions. node_downscaler { empty_nodes_enabled = true, empty_nodes_delay = "5m" }. (see below for nested schema)
+            partial_template_matching_enabled: (Boolean)
+            pod_pinner: (List of Object) (see below for nested schema)
+            scoped_mode: (Boolean) Run the node autoscaler in scoped mode.
+            spot_instances: (all nested fields) — manage via Node Templates
+            unschedulable_pods: (List of Object) Policy defining autoscaler's behavior when unschedulable pods were detected. unschedulable_pods { enabled = true, partial_template_matching_enabled = false, pod_pinner { enabled = true } }. (see below for nested schema)
+            unschedulable_pods.custom_instances_enabled: — manage via Node Templates
+            unschedulable_pods.headroom: / headroom_spot — manage via Node Templates
+            unschedulable_pods.node_constraints: — manage via Node Templates
+            version: (String) Policy version for optimistic locking.
         importStatements: []
     castai_cache_configuration Resource - terraform-provider-castai:
         subCategory: ""
@@ -403,6 +361,234 @@ resources:
             timeouts: (Block, Optional) (see below for nested schema)
             update: (String)
         importStatements: []
+    castai_commitment:
+        subCategory: ""
+        description: Manages a single CAST AI commitment (reserved instance, savings plan, CUD, capacity block or capacity reservation) via the pricing v1beta Commitments API. For bulk management, use for_each — see the examples/ directory.
+        name: castai_commitment
+        title: castai_commitment Resource - terraform-provider-castai
+        examples:
+            - name: gcp_cud
+              manifest: |-
+                {
+                  "allowed_usage": 1,
+                  "autoscaling_status": "ACTIVE",
+                  "cloud": "GCP",
+                  "end_time": "2027-01-01T00:00:00Z",
+                  "gcp_resource_cud_details": {
+                    "cpu": 32,
+                    "cud_id": "123456789",
+                    "memory_mb": 131072,
+                    "plan": "TWELVE_MONTH",
+                    "status": "ACTIVE",
+                    "type": "GENERAL_PURPOSE_E2"
+                  },
+                  "name": "prod-cud-us-central1",
+                  "region": "us-central1",
+                  "start_time": "2026-01-01T00:00:00Z",
+                  "type": "RESOURCE_CUD"
+                }
+            - name: aws_ri
+              manifest: |-
+                {
+                  "aws_reserved_instances_details": {
+                    "id": "abcdef01-2345-6789-abcd-ef0123456789",
+                    "instance_count": 10,
+                    "instance_type": "m5.xlarge",
+                    "scope": "Region",
+                    "state": "active"
+                  },
+                  "cloud": "AWS",
+                  "end_time": "2027-01-01T00:00:00Z",
+                  "name": "prod-ri-us-east-1",
+                  "region": "us-east-1",
+                  "start_time": "2026-01-01T00:00:00Z",
+                  "type": "RESERVED_INSTANCE"
+                }
+            - name: azure_reservation
+              manifest: |-
+                {
+                  "azure_reservation_details": {
+                    "count": 5,
+                    "id": "abcdef01-2345-6789-abcd-ef0123456789",
+                    "instance_flexibility": "ON",
+                    "instance_type": "Standard_D4s_v3",
+                    "plan": "THREE_YEAR",
+                    "scope": "Shared",
+                    "status": "Succeeded"
+                  },
+                  "cloud": "AZURE",
+                  "end_time": "2029-01-01T00:00:00Z",
+                  "name": "prod-reservation-eastus",
+                  "region": "eastus",
+                  "start_time": "2026-01-01T00:00:00Z",
+                  "type": "RESERVED_INSTANCE"
+                }
+            - name: gcp_capacity_reservation
+              manifest: |-
+                {
+                  "cloud": "GCP",
+                  "gcp_capacity_reservation_details": {
+                    "accelerators": [
+                      {
+                        "accelerator_count": 1,
+                        "accelerator_type": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-central1-a/acceleratorTypes/nvidia-tesla-a100"
+                      }
+                    ],
+                    "id": "my-reservation",
+                    "instance_type": "a2-highgpu-1g",
+                    "project_id": "my-project",
+                    "self_link": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-central1-a/reservations/my-reservation",
+                    "specific_reservation_required": true,
+                    "state": "READY",
+                    "total_instance_count": 4,
+                    "zone": "us-central1-a"
+                  },
+                  "name": "gpu-reservation-us-central1",
+                  "region": "us-central1",
+                  "start_time": "2026-01-01T00:00:00Z",
+                  "type": "ON_DEMAND_CAPACITY_RESERVATION"
+                }
+            - name: aws_odcr
+              manifest: |-
+                {
+                  "allowed_usage": 1,
+                  "autoscaling_status": "ACTIVE",
+                  "aws_odcr_details": {
+                    "availability_zone": "us-east-1a",
+                    "available_instance_count": 10,
+                    "end_date_type": "unlimited",
+                    "id": "cr-abcdef01234567890",
+                    "instance_match_criteria": "open",
+                    "instance_platform": "Linux/UNIX",
+                    "instance_type": "m5.xlarge",
+                    "interruptible": false,
+                    "state": "active",
+                    "tenancy": "default",
+                    "total_instance_count": 10
+                  },
+                  "cloud": "AWS",
+                  "name": "prod-odcr-us-east-1",
+                  "region": "us-east-1",
+                  "start_time": "2026-01-01T00:00:00Z",
+                  "type": "ON_DEMAND_CAPACITY_RESERVATION"
+                }
+            - name: bulk_gcp_cuds
+              manifest: |-
+                {
+                  "cloud": "GCP",
+                  "end_time": "${each.value.end_time}",
+                  "for_each": "${{ for cud in local.cuds : cud.cud_id =\u003e cud }}",
+                  "gcp_resource_cud_details": {
+                    "cpu": "${each.value.cpu}",
+                    "cud_id": "${each.value.cud_id}",
+                    "memory_mb": "${each.value.memory_mb}",
+                    "plan": "${each.value.plan}",
+                    "status": "${each.value.status}",
+                    "type": "${each.value.type}"
+                  },
+                  "name": "${each.value.name}",
+                  "region": "${each.value.region}",
+                  "start_time": "${each.value.start_time}",
+                  "type": "RESOURCE_CUD"
+                }
+              references:
+                end_time: each.value.end_time
+                name: each.value.name
+                region: each.value.region
+                start_time: each.value.start_time
+        argumentDocs:
+            accelerator_count: (Number) Number of accelerators of this type per VM.
+            accelerator_type: (String) Accelerator (GPU) type as the full GCP acceleratorType URL.
+            accelerators: (Attributes List) Accelerators (GPUs) reserved VMs must match exactly. (see below for nested schema)
+            allowed_usage: (Number) Allowed usage of the commitment (0.0-1.0). 1.0 means 100%. Defaults to 1.0.
+            assured_instance_count: (Number) Assured count for the reservation.
+            auto_assignment: (Boolean) Auto-assign the commitment to all matching clusters in the commitment's region. If not set, the server's auto-assignment logic determines the value at creation time. Set to false to explicitly disable auto-assignment. Not supported for CAPACITY_BLOCK or targeted ON_DEMAND_CAPACITY_RESERVATION commitments.
+            autoscaling_status: '(String) Controls whether the autoscaler can use this commitment. One of: ACTIVE, INACTIVE. Defaults to INACTIVE (matches the API default); set to ACTIVE for the autoscaler to use the commitment.'
+            availability_zone: (String) Availability zone name.
+            availability_zone_id: (String) Availability zone ID.
+            availability_zone_name: (String) AWS availability zone name (zonal RIs only).
+            available_instance_count: (Number) Available (unused) instance count.
+            aws_capacity_block_details: (Attributes) AWS Capacity Block details. Required when type is CAPACITY_BLOCK. (see below for nested schema)
+            aws_capacity_block_details.availability_zone: (String) Availability zone name.
+            aws_capacity_block_details.availability_zone_id: (String) Availability zone ID.
+            aws_capacity_block_details.available_instance_count: (Number) Available (unused) instance count.
+            aws_capacity_block_details.id: (String) Capacity block reservation ID.
+            aws_capacity_block_details.instance_platform: (String) Instance platform (e.g. Linux/UNIX).
+            aws_capacity_block_details.instance_type: (String) EC2 instance type.
+            aws_capacity_block_details.state: (String) Capacity block state.
+            aws_capacity_block_details.total_instance_count: (Number) Total reserved instance count.
+            aws_odcr_details: (Attributes) AWS On-Demand Capacity Reservation details. Required when type is ON_DEMAND_CAPACITY_RESERVATION on AWS. (see below for nested schema)
+            aws_reserved_instances_details: (Attributes) AWS Reserved Instances details. Required when type is RESERVED_INSTANCE on AWS. (see below for nested schema)
+            aws_savings_plan_details: (Attributes) AWS Savings Plan details. Required when type is SAVINGS_PLAN on AWS. (see below for nested schema)
+            azure_reservation_details: (Attributes) Azure Reservation details. Required when type is RESERVED_INSTANCE on Azure. (see below for nested schema)
+            azure_savings_plan_details: (Attributes) Azure Savings Plan details. Required when type is SAVINGS_PLAN on Azure. (see below for nested schema)
+            cloud: '(String) Cloud provider. One of: AWS, GCP, AZURE.'
+            commitment_amount: (Number) Commitment amount in USD per hour.
+            commitment_term: '(String) Commitment term. One of: COMMITMENT_TERM_UNIT_ONE_YEAR, COMMITMENT_TERM_UNIT_THREE_YEARS.'
+            count: (Number) Count of reserved instances.
+            cpu: (Number) Committed CPU count.
+            create_time: (String) Creation time.
+            cud_id: (String) CUD ID from GCP.
+            disk_size_gb: (Number) Disk size in GB.
+            display_name: (String) User-specified display name.
+            end_date_type: (String) End date type (unlimited, limited).
+            end_time: (String) End time of the commitment (RFC3339).
+            gcp_capacity_reservation_details: (Attributes) GCP capacity reservation details. Required when type is ON_DEMAND_CAPACITY_RESERVATION on GCP. (see below for nested schema)
+            gcp_flex_cud_details: (Attributes) GCP Flex CUD details. Required when type is FLEX_CUD. (see below for nested schema)
+            gcp_resource_cud_details: (Attributes) GCP Resource CUD details. Required when type is RESOURCE_CUD. (see below for nested schema)
+            id: (String) Commitment ID.
+            in_use_instance_count: (Number) Number of instances currently in use.
+            instance_count: (Number) Instance count.
+            instance_flexibility: '(String) Instance flexibility. One of: ON, OFF.'
+            instance_match_criteria: (String) Instance match criteria (open, targeted).
+            instance_platform: (String) Instance platform (e.g. Linux/UNIX).
+            instance_type: (String) EC2 instance type.
+            instance_type_family: (String) Instance type family (EC2 instance savings plans).
+            interface: '(String) Disk interface. One of: GCP_RESERVATION_LOCAL_SSD_INTERFACE_SCSI, GCP_RESERVATION_LOCAL_SSD_INTERFACE_NVME.'
+            interruptible: (Boolean) Whether this reservation is interruptible. Set to true for interruptible ODCRs, false otherwise.
+            line_item_id: (String) Line item ID within the order.
+            local_ssds: (Attributes List) Local SSD disks reserved VMs must match exactly. (see below for nested schema)
+            memory_mb: (Number) Committed memory in MB.
+            min_cpu_platform: (String) Minimum CPU platform the reserved VMs require (e.g. Intel Cascade Lake).
+            name: (String) Commitment name.
+            offer: (String) Offer identifier.
+            offering_id: (String) AWS savings plan offering ID.
+            order_name: (String) Resource name of the order.
+            organization_id: (String) CAST AI organization ID. If not provided, the organization from the provider configuration is used.
+            payment_option: '(String) Payment option. One of: ALL_UPFRONT, PARTIAL_UPFRONT, NO_UPFRONT.'
+            plan: '(String) Reservation term plan. One of: ONE_YEAR, THREE_YEAR.'
+            prioritization: (Boolean) If enabled, resources used by lower-priority clusters are ignored.
+            project_id: (String) GCP project ID that owns the reservation.
+            project_ids: (List of String) Project IDs this reservation is shared with (SPECIFIC_PROJECTS share type only).
+            provisioning_state: (String) Provisioning state (e.g. Succeeded, Expired, Cancelled).
+            purchase_time: (String) Purchase time (RFC3339).
+            region: (String) Region where the commitment is applicable. Not required for region-agnostic commitment types such as Compute Savings Plans.
+            scaling_strategy: '(String) Scaling strategy for the autoscaler. One of: DEFAULT, CPU_BASED, MEMORY_BASED.'
+            scope: '(String) Scope: whether the commitment applies to a region or an availability zone.'
+            scope_management_group: (String) Scope management group.
+            scope_resource_group: (String) Scope resource group.
+            scope_subscription: (String) Scope subscription.
+            scope_tenant: (String) Scope tenant ID.
+            self_link: (String) Server-defined URL for the reservation (e.g. https://www.googleapis.com/compute/v1/projects/my-project/zones/us-central1-a/reservations/my-reservation).
+            share_settings: (Attributes) Reservation sharing settings. (see below for nested schema)
+            share_type: '(String) Share type. One of: GCP_RESERVATION_SHARE_TYPE_LOCAL, GCP_RESERVATION_SHARE_TYPE_SPECIFIC_PROJECTS, GCP_RESERVATION_SHARE_TYPE_ORGANIZATION.'
+            specific_reservation_required: (Boolean) Whether the reservation requires specific reservation affinity. Set to true for targeted reservations, false for automatic (open) reservations.
+            start_time: (String) Start time of the commitment (RFC3339, e.g. 2026-01-01T00:00:00Z).
+            state: (String) Computed lifecycle state of the commitment.
+            status: (String) Provisioning state (e.g. Succeeded).
+            tenancy: (String) Tenancy (default, dedicated).
+            term: '(String) Savings plan term. One of: ONE_YEAR, THREE_YEARS, FIVE_YEARS.'
+            total_instance_count: (Number) Total reserved instance count.
+            type: '(String) Commitment type. One of: RESERVED_INSTANCE, RESOURCE_CUD, SAVINGS_PLAN, CAPACITY_BLOCK, ON_DEMAND_CAPACITY_RESERVATION, FLEX_CUD. The matching details block must be set.'
+            update_time: (String) Last update time.
+            zone: (String) GCP zone of the reservation.
+        importStatements:
+            - |-
+              # Import by commitment ID (organization taken from provider configuration):
+              terraform import castai_commitment.gcp_cud 11111111-2222-3333-4444-555555555555
+
+              # Or with an explicit organization ID:
+              terraform import castai_commitment.gcp_cud <organization_id>/11111111-2222-3333-4444-555555555555
     castai_commitments:
         subCategory: ""
         description: Commitments represent cloud service provider reserved instances (Azure) and commited use discounts (GCP) that can be used by CAST AI autoscaler.
@@ -545,13 +731,17 @@ resources:
             default: (Boolean) Whether this edge configuration is the default one
             edge_location_id: (String) Edge location ID
             gcp: (Attributes) GCP specific configuration (see below for nested schema)
+            gpu_cluster: (String) GPU cluster info
             id: (String) Edge configuration ID
             image_id: (String) ImageID to be used for edge creation. It can be an AMI ID (for example 'ami-0abcdef1234567890') or a name filter (for example 'al2023-ami-ecs-hvm-*')
             labels: (Map of String) Instance/VM labels
             name: (String) Name of the edge configuration
+            nebius: (Attributes) Nebius specific configuration (see below for nested schema)
             oci: (Attributes) OCI specific configuration (see below for nested schema)
             organization_id: (String) CAST AI organization ID
+            reservation_ids: (List of String) Capacity block reservation IDs
             socket: '(String) Path to an existing CRI socket. Example: unix:///run/containerd/containerd.sock'
+            ssh_public_key: (String) Base64 encoded SSH public key to be used for provisioned nodes.
             tags: (Map of String) Instance/VM tags
             user_data_base64: '(String) Base64 encoded user data to run on the edge as part of bootstrap. The payload must start with either #cloud-config (cloud-init YAML) or #! (shell script with a shebang)'
         importStatements: []
@@ -635,6 +825,55 @@ resources:
                 }
               references:
                 cluster_id: castai_omni_cluster.example.id
+            - name: aws_example_overrides
+              manifest: |-
+                {
+                  "aws": {
+                    "access_key_id_wo": "AKIAIOSFODNN7EXAMPLE",
+                    "account_id": "123456789012",
+                    "secret_access_key_wo": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                    "security_group_id": "sg-12345678",
+                    "subnet_ids": {
+                      "us-east-1a": "subnet-12345678"
+                    },
+                    "vpc_id": "vpc-12345678"
+                  },
+                  "cluster_id": "${castai_omni_cluster.example.id}",
+                  "control_plane": {
+                    "api_server_port": 6443,
+                    "external_address": "api.edge.example.com",
+                    "ha": false,
+                    "konnectivity_port": 8132,
+                    "service_annotations": {
+                      "example.com/owner": "platform"
+                    }
+                  },
+                  "control_plane_mode": "SHARED",
+                  "liqo": {
+                    "gateway_replicas": 2,
+                    "gateway_server": {
+                      "external_address": "gw.edge.example.com",
+                      "external_port": 51820,
+                      "service_annotations": {
+                        "example.com/owner": "platform"
+                      },
+                      "service_labels": {
+                        "example.com/tier": "edge"
+                      }
+                    }
+                  },
+                  "name": "aws-edge-us-east-shared",
+                  "organization_id": "your-org-id",
+                  "region": "us-east-1",
+                  "zones": [
+                    {
+                      "id": "us-east-1a",
+                      "name": "us-east-1a"
+                    }
+                  ]
+                }
+              references:
+                cluster_id: castai_omni_cluster.example.id
             - name: aws_example_no_addons
               manifest: |-
                 {
@@ -658,6 +897,7 @@ resources:
             access_key_id_wo: (String, Sensitive) AWS access key ID
             account_id: (String) AWS account ID
             addons: (Attributes List) Optional addons to install on the edge cluster. Defaults to installing nvidia-gpu-operator. Set to an empty list to install no optional addons. (see below for nested schema)
+            api_server_port: (Number) The port used for the API server. Defaults to the system value when unset.
             aws: (Attributes) AWS configuration for the edge location (see below for nested schema)
             client_service_account_json_base64_wo: (String, Sensitive) Base64 encoded service account JSON for provisioning edge resources
             cluster_id: (String) CAST AI cluster ID
@@ -668,14 +908,22 @@ resources:
             credentials_revision: (Number) Revision number incremented each time credentials change
             custom: (Attributes) Custom cloud provider configuration for the edge location (see below for nested schema)
             description: (String) Description of the edge location
+            external_address: (String) The IP address or hostname used to reach the API server from outside the cluster, if in-cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+            external_port: (Number) The port used for the Liqo gateway server.
             fingerprint_wo: (String, Sensitive) API key fingerprint
+            gateway_replicas: (Number) Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+            gateway_server: (Attributes) Configuration overrides for the Liqo gateway server. (see below for nested schema)
             gcp: (Attributes) GCP configuration for the edge location (see below for nested schema)
             ha: (Boolean) Whether to use HA mode for control plane. If not set, default is HA.
             id: (String) Edge location ID
             instance_profile: (String) AWS IAM instance profile ARN to be attached to edge instances. It can be used to grant permissions to access other AWS resources such as ECR.
             instance_service_account: (String) GCP service account email to be attached to edge instances. It can be used to grant permissions to access other GCP resources.
+            konnectivity_port: (Number) The port used for the konnectivity server. Defaults to the system value when unset.
+            liqo: (Attributes) Liqo configuration for the edge cluster. (see below for nested schema)
             name: (String) Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
             name_tag: (String, Deprecated) The value of a 'Name' tag applied to VPC resources
+            nebius: (Attributes) Nebius configuration for the edge location (see below for nested schema)
+            network_id: (String) The ID of the VPC network to be used in the selected region
             network_name: (String) The name of the network to be used in the selected region
             network_tags: (Set of String) Tags applied on the provisioned cloud resources and the firewall rule
             networking: (Attributes) Edge cluster networking configuration. (see below for nested schema)
@@ -683,14 +931,18 @@ resources:
             organization_id: (String) CAST AI organization ID
             overlay: '(String) Overlay mode for kube-router pod-to-pod traffic. Valid values: OVERLAY_UNSPECIFIED, OVERLAY_OFF, OVERLAY_SUBNET, OVERLAY_FULL.'
             overlay_encap: '(String) Encapsulation protocol used by the overlay. Valid values: OVERLAY_ENCAP_UNSPECIFIED, OVERLAY_ENCAP_IPIP, OVERLAY_ENCAP_FOU.'
+            parent_id: (String) Nebius project ID that owns the edge location resources
             private_key_base64_wo: (String, Sensitive) Base64 encoded API private key
             project_id: (String) GCP project ID where edges run
             region: (String) The region where the edge location is deployed. Required for AWS, GCP and OCI providers.
             role_arn: (String) AWS IAM role ARN used for Google OIDC federation impersonation
             secret_access_key_wo: (String, Sensitive) AWS secret access key
             security_group_id: (String) Security group ID to be used in the selected region
+            service_account_id: (String) Nebius service account ID to be impersonated by CAST AI
+            service_annotations: (Map of String) Custom annotations to apply to the control plane service.
+            service_labels: (Map of String) Custom labels to apply to the Liqo gateway service.
             subnet_cidr: (String) VPC Subnet IPv4 CIDR block
-            subnet_id: (String) OCI subnet ID of edge location
+            subnet_id: (String) The ID of the subnet to be used in the selected region
             subnet_ids: (Map of String) Map of zone names to subnet IDs to be used in the selected region
             subnet_name: (String) The name of the subnetwork to be used in the selected region
             target_service_account_email: (String) Target service account email to be used for impersonation
@@ -869,6 +1121,82 @@ resources:
             timeouts: (Block, Optional) (see below for nested schema)
             update: (String)
         importStatements: []
+    castai_evictor:
+        subCategory: ""
+        description: CAST AI evictor resource to manage evictor configuration
+        name: castai_evictor
+        title: castai_evictor Resource - terraform-provider-castai
+        examples:
+            - name: evictor
+              manifest: |-
+                {
+                  "aggressive_mode": false,
+                  "arm64_supported": false,
+                  "cluster_id": "${castai_eks_cluster.test.id}",
+                  "cycle_interval": "60s",
+                  "drain_rollback_timeout": "1m",
+                  "drain_timeout": "10m",
+                  "dry_run": false,
+                  "emit_node_related_pod_events": false,
+                  "enabled": true,
+                  "force_disable_karpenter_mode": false,
+                  "force_disable_live_migration": false,
+                  "force_disable_pod_mutations": false,
+                  "force_disable_woop": false,
+                  "ignore_pod_disruption_budgets": false,
+                  "max_target_nodes_per_cycle": 0,
+                  "min_target_nodes_per_cycle": 0,
+                  "node_grace_period_minutes": 10,
+                  "pod_eviction_failure_back_off_interval": "30s",
+                  "pricing_awareness_enabled": false,
+                  "pricing_model": [
+                    {
+                      "base_cpu_cost": "0.5",
+                      "base_mem_cost": "0.5",
+                      "spot_discount": "0.5"
+                    }
+                  ],
+                  "scoped_mode": false,
+                  "soft_tainting": false,
+                  "target_node_percentage": 0,
+                  "windows": false
+                }
+              references:
+                cluster_id: castai_eks_cluster.test.id
+        argumentDocs:
+            aggressive_mode: (Boolean) Enable/disable aggressive mode. By default, Evictor does not target nodes that are running unreplicated pods. This mode will make the Evictor start considering application with just a single replica.
+            arm64_supported: (Boolean) If enabled, indicates arm64 nodes are present so the scheduling simulation includes them as valid bin-packing targets.
+            base_cpu_cost: (String) Cost coefficient per CPU core used in node price estimation. Serialized as a Kubernetes resource.Quantity string.
+            base_mem_cost: (String) Cost coefficient per GiB of memory used in node price estimation. Serialized as a Kubernetes resource.Quantity string.
+            cluster_id: (String) CAST AI cluster id.
+            create: (String)
+            cycle_interval: (String) Configure the interval duration between Evictor operations. This property can be used to lower or raise the frequency of the Evictor's find-and-drain operations.
+            drain_rollback_timeout: (String) How long the evictor waits before rolling back a cordon when a drain attempt fails.
+            drain_timeout: (String) Maximum time the evictor waits for a node to fully drain before giving up.
+            dry_run: (Boolean) Enable/disable dry-run. This property allows you to prevent the Evictor from carrying any operations out and preview the actions it would take.
+            emit_node_related_pod_events: (Boolean) If enabled, Evictor emits Kubernetes events on pods when they are evicted as part of a node drain.
+            enabled: (Boolean) Enable/disable the Evictor policy. This will either install or uninstall the Evictor component in your cluster.
+            force_disable_karpenter_mode: (Boolean) If enabled, disables Karpenter-aware scheduling simulation even when Karpenter is detected.
+            force_disable_live_migration: (Boolean) If enabled, disables LIVE pod migration even when the cluster capability is detected.
+            force_disable_pod_mutations: (Boolean) If enabled, disables PodMutation CR application during scheduling simulation even when the cluster capability is detected.
+            force_disable_woop: (Boolean) If enabled, disables WOOP scheduling recommendations even when the cluster capability is detected.
+            id: (String) The ID of this resource.
+            ignore_pod_disruption_budgets: (Boolean) If enabled then Evictor will attempt to evict pods that have pod disruption budgets configured.
+            max_target_nodes_per_cycle: (Number) Upper bound on nodes drained in a single cycle.
+            min_target_nodes_per_cycle: (Number) Lower bound on nodes considered per cycle.
+            node_grace_period_minutes: (Number) Configure the node grace period which controls the duration which must pass after a node has been created before Evictor starts considering that node.
+            pod_eviction_failure_back_off_interval: (String) Configure the pod eviction failure back off interval. If pod eviction fails then Evictor will attempt to evict it again after the amount of time specified here.
+            pricing_awareness_enabled: (Boolean) If enabled, the evictor factors node cost into drain candidate selection, preferring to drain more expensive nodes first.
+            pricing_model: '(Block List, Max: 1) Overrides the default cost coefficients used when pricing_awareness_enabled is true. (see below for nested schema)'
+            scoped_mode: (Boolean) Enable/disable scoped mode. By default, Evictor targets all nodes in the cluster. This mode will constrain it to just the nodes which were created by CAST AI.
+            soft_tainting: (Boolean) If enabled, Evictor will use soft tainting (PreferNoSchedule) instead of hard cordoning after eviction.
+            spot_discount: (String) Fractional discount applied to spot instance price relative to on-demand (e.g. "0.5" means spot is 50% cheaper). Serialized as a Kubernetes resource.Quantity string.
+            status: (String) Status provides indication whether the Evictor policy will be synced with Evictor helm chart - it will only be done if status is "Compatible".
+            target_node_percentage: (Number) Percentage of eligible nodes to consider per cycle, applied after min/max bounds.
+            timeouts: (Block, Optional) (see below for nested schema)
+            update: (String)
+            windows: (Boolean) If enabled, Evictor will evict pods and nodes running Windows workloads.
+        importStatements: []
     castai_evictor_advanced_config:
         subCategory: ""
         description: CAST AI eviction config resource to manage evictor properties
@@ -903,6 +1231,7 @@ resources:
             create: (String)
             disposable: (Boolean) Mark node as disposable
             evictor_advanced_config: '(Block List, Min: 1) evictor advanced configuration to target specific node/pod (see below for nested schema)'
+            force_disposable: (Boolean) Forcibly treat matched pods as disposable, overriding protection annotations (removal-disabled, safe-to-evict=false, do-not-disrupt, eviction-disabled).
             id: (String) The ID of this resource.
             key: (String)
             kind: (String)
@@ -1115,12 +1444,30 @@ resources:
               references:
                 cluster_id: castai_eks_cluster.test.id
                 eks.instance_profile_arn: aws_iam_instance_profile.test.arn
+            - name: gke
+              manifest: |-
+                {
+                  "cluster_id": "${castai_gke_cluster.test.id}",
+                  "gke": [
+                    {
+                      "secondary_boot_disks": [
+                        {
+                          "disk_image": "global/images/container-image-cache-disk",
+                          "mode": "CONTAINER_IMAGE_CACHE"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "gke-default"
+                }
+              references:
+                cluster_id: castai_gke_cluster.test.id
             - name: default
               manifest: '{}'
         argumentDocs:
             accelerated_networking: '(String) Controls SR-IOV accelerated networking on the node NIC. Allowed values: disabled (force off regardless of SKU capability). When omitted, the field is not sent to the API and the API default applies.'
             aks: '(Block List, Max: 1) (see below for nested schema)'
-            aks_image_family: '(String) Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022)'
+            aks_image_family: '(String) Image OS Family to use when provisioning node in AKS. If both image and family are provided, the system will use provided image and provisioning logic for given family. If only image family is provided, the system will attempt to resolve the latest image from that family based on kubernetes version and node architecture. If image family is omitted, a default family (based on cloud provider) will be used. See Cast.ai documentation for details. Possible values: (ubuntu,ubuntu2204,ubuntu2404,azure-linux,windows2019,windows2022,windows2025)'
             application_security_groups: (List of String) Application security groups to be used for provisioned nodes
             arn: (String) AWS target group ARN for CAST provisioned nodes
             cache: '(String, Deprecated) Deprecated: this field has no effect. Ephemeral OS disks always use ReadOnly cache strategy'
@@ -1129,6 +1476,7 @@ resources:
             create: (String)
             delete: (String)
             disk_cpu_ratio: (Number) Disk to CPU ratio. Sets the number of GiBs to be added for every CPU on the node. Defaults to 0
+            disk_image: '(String) Image the disk is initialized from: a GKE image reference, projects/PROJECT/global/images/NAME or the same-project shorthand global/images/NAME.'
             disk_type: '(String) Type of boot disk attached to the node. (See disk types). One of: pd-standard, pd-balanced, pd-ssd, pd-extreme'
             dns_cluster_ip: (String) IP address to use for DNS queries within the cluster
             docker_config: (String) Optional docker daemon configuration properties in JSON format. Provide only properties that you want to override. Applicable for EKS only. Available values
@@ -1155,6 +1503,7 @@ resources:
             max_pods_per_node: (Number) Maximum number of pods that can be run on a node, which affects how many IP addresses you will need for each node. Defaults to 30
             max_pods_per_node_formula: '(String) Formula to calculate the maximum number of pods that can be run on a node. The following list of variables will be bound to a number before evaluating and can be used in the formula: NUM_MAX_NET_INTERFACES, NUM_IP_PER_INTERFACE, NUM_IP_PER_PREFIX, NUM_CPU, NUM_RAM_GB .'
             min_disk_size: (Number) Minimal disk size in GiB. Defaults to 100, min 30, max 65536
+            mode: '(String) Mode of the secondary boot disk. MODE_UNSPECIFIED (default) - arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.'
             name: (String) Name of the node configuration. It must be unique within the cluster. In case of cluster is reonboarded to Terraform, when previously it was onboarded with CAST AI UI, and the name corresponds to previously created node configuration this resource will override existing configuration instead of creating new.
             network_security_group: (String) Network security group to be used for provisioned nodes, if not provided default security group from castpool will be used
             network_tags: (List of String) Network tags to be added on a VM. (See network tags)
@@ -1169,6 +1518,7 @@ resources:
             public_ip_prefix: (String) Public IP prefix to be used for provisioned nodes
             range_name: (String) Name of the secondary IP range
             read: (String)
+            secondary_boot_disks: (Block List) Secondary boot disks to be attached to provisioned nodes. Can be used to preload container images or arbitrary data on new nodes. (see below for nested schema)
             secondary_ip_range: '(Block List, Max: 1) Secondary IP range configuration for pods in GKE nodes (see below for nested schema)'
             security_groups: (List of String) Cluster's security groups configuration for CAST provisioned nodes
             ssh_public_key: (String) SSH public key to be used for provisioned nodes
@@ -1278,6 +1628,15 @@ resources:
                       "value": "backend"
                     }
                   ],
+                  "edge_location_config": [
+                    {
+                      "edge_config_id": "${castai_edge_configuration.example_1.id}",
+                      "edge_location_id": "${castai_edge_location.example_1.id}"
+                    },
+                    {
+                      "edge_location_id": "${castai_edge_location.example_2.id}"
+                    }
+                  ],
                   "is_default": true,
                   "is_enabled": true,
                   "name": "default-by-castai",
@@ -1286,6 +1645,8 @@ resources:
               references:
                 cluster_id: castai_eks_cluster.test.id
                 configuration_id: castai_node_configuration.default.id
+                edge_location_config.edge_config_id: castai_edge_configuration.example_1.id
+                edge_location_config.edge_location_id: castai_edge_location.example_2.id
         argumentDocs:
             affinity: (Block List) (see below for nested schema)
             architecture_priority: '(List of String) Priority ordering of architectures, specifying no priority will pick cheapest. Allowed values: amd64, arm64.'
@@ -1295,6 +1656,7 @@ resources:
             azs: (List of String) The list of AZ names to consider for the node template, if empty or not set all AZs are considered.
             bare_metal: '(String) Bare metal constraint, will only pick bare metal nodes if set to true. Will only pick non-bare metal nodes if false. Defaults to unspecified. Allowed values: true, false, unspecified.'
             burstable_instances: '(String) Will include burstable instances when enabled otherwise they will be excluded. Supported values: enabled, disabled or ``.'
+            capacity_reservation_ids: (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
             capacity_reservations: (Block List) Capacity reservations that this template can use for provisioning. (see below for nested schema)
             capacity_resource_group_arn: (String) Capacity resource group ARN for UltraServer capacity blocks.
             clm_enabled: (Boolean) Marks whether Container Live Migration (CLM) should be enabled for nodes created from this template. Supported on EKS, GKE, and AKS clusters. CLM-enabled nodes participate in live workload migration during rebalancing, scale-down, and node lifecycle events.
@@ -1323,14 +1685,19 @@ resources:
                 the sole tenancy or dedicated node (example: setting min CPU to 16). (see below for nested schema)
             default_shared_clients_per_gpu: (Number) Defines default number of shared clients per GPU.
             delete: (String)
-            edge_location_ids: (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+            edge_config_id: (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+            edge_location_config: (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+            edge_location_id: (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+            edge_location_ids: (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
             effect: '(String) Effect of a taint to be added to nodes created from this template, the default is NoSchedule. Allowed values: NoSchedule, NoExecute.'
             enable_spot_diversity: (Boolean) Enable/disable spot diversity policy. When enabled, autoscaler will try to balance between diverse and cost optimal instance types.
             enable_time_sharing: '(Boolean, Deprecated) Enable/disable GPU time-sharing. Deprecated: use sharing_strategy = "time-slicing" instead.'
+            enabled: (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
             exclude: (List of String) Instance families to exclude when filtering (includes all other families).
             exclude_names: (List of String) Names of the GPUs to exclude.
             fallback_restore_rate_seconds: '(Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.'
             fractional_gpus: '(String) Will include fractional GPU instances when enabled otherwise they will be excluded. Supported values: enabled, disabled or ``.'
+            gcp: '(Block List, Max: 1) GCP-specific constraints for the node template. (see below for nested schema)'
             gpu: '(Block List, Max: 1) GPU configuration. (see below for nested schema)'
             gpu_name: (String) GPU name.
             id: (String) The ID of this resource.
@@ -1339,7 +1706,7 @@ resources:
             instance_families: '(Block List, Max: 1) (see below for nested schema)'
             instance_type_adjustments: '(Map of String) Map of instance type names to price adjustment multipliers (as strings). Example: {"r7a.xlarge": "1.0", "r7i.xlarge": "1.20"}'
             instance_types: (List of String) Instance/node types in this node group.
-            is_default: (Boolean) Flag whether the node template is default. It's is always set to 'true' on 'default-by-castai' node template and 'false' otherwise.
+            is_default: (Boolean, Deprecated) Flag whether the node template is default. It's is always set to 'true' on 'default-by-castai' node template and 'false' otherwise.
             is_enabled: (Boolean) Flag whether the node template is enabled and considered for autoscaling.
             is_gpu_only: (Boolean) GPU instance constraint - will only pick nodes with GPU if true
             key: (String) Key of the node affinity selector.
@@ -1372,6 +1739,7 @@ resources:
             spot_reliability_price_increase_limit_percent: (Number) Allowed node price increase when using spot reliability on ordering the instance types . E.g. if the value is 10%, then the overall price of instance types can be 10% higher than the price of the optimal configuration.
             storage_optimized: (Boolean) Storage optimized instance constraint (deprecated).
             storage_optimized_state: '(String) Storage optimized instance constraint - will only pick storage optimized nodes if enabled and won''t pick if disabled. Empty value will have no effect. Supported values: enabled, disabled or empty string.'
+            stuck_pod_resize_reconciliation: '(Block List, Max: 1) Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop''s eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)'
             timeouts: (Block, Optional) (see below for nested schema)
             type: '(String) Type of capacity reservation. Allowed values: ON_DEMAND_CAPACITY_RESERVATION, CAPACITY_BLOCK.'
             update: (String)
@@ -2031,7 +2399,7 @@ resources:
               terraform import 'castai_rebalancing_job.spots' 12345678-1762-45eb-bd4f-85cb172e6ad3/spots
     castai_rebalancing_schedule:
         subCategory: ""
-        description: CAST AI rebalancing schedule resource to manage rebalancing schedules.
+        description: CAST AI rebalancing schedule resource to manage rebalancing schedules. The keep_drain_timeout_nodes attribute is deprecated in favor of evict_gracefully (both are aliases of the same setting); migrate by renaming the attribute and keeping the same value.
         name: castai_rebalancing_schedule
         title: castai_rebalancing_schedule Resource - terraform-provider-castai
         examples:
@@ -2045,6 +2413,7 @@ resources:
                           "ignore_local_persistent_volumes": true,
                           "ignore_problem_job_pods": true,
                           "ignore_problem_pods_without_controller": true,
+                          "ignore_problem_prevented_drain_pods": true,
                           "ignore_problem_removal_disabled_pods": true
                         }
                       ],
@@ -2054,17 +2423,18 @@ resources:
                           "uncordon_after_seconds": 7200
                         }
                       ],
+                      "evict_gracefully": true,
                       "execution_conditions": [
                         {
                           "achieved_savings_percentage": 10,
                           "enabled": true
                         }
                       ],
-                      "keep_drain_timeout_nodes": true,
                       "node_ttl_seconds": 300,
                       "num_targeted_nodes": 3,
                       "rebalancing_min_nodes": 2,
-                      "selector": "${jsonencode({\n      nodeSelectorTerms = [{\n        matchExpressions = [\n          {\n            key      = \"scheduling.cast.ai/spot\"\n            operator = \"Exists\"\n          }\n        ]\n      }]\n    })}"
+                      "selector": "${jsonencode({\n      nodeSelectorTerms = [{\n        matchExpressions = [\n          {\n            key      = \"scheduling.cast.ai/spot\"\n            operator = \"Exists\"\n          }\n        ]\n      }]\n    })}",
+                      "split_nodes_in_batches_of": 2
                     }
                   ],
                   "name": "rebalance spots at every 30th minute",
@@ -2088,25 +2458,29 @@ resources:
             cron: (String) Cron expression defining when the schedule should trigger.
             delete: (String)
             disable_uncordon: (Boolean) When true, drain-failed nodes will NOT be automatically uncordoned. Defaults to false (nodes are uncordoned after the timeout).
-            drain_failure_config: '(Block List, Max: 1) Configures behavior when a node fails to drain during rebalancing. Relevant only when keep_drain_timeout_nodes is true. (see below for nested schema)'
+            drain_failure_config: '(Block List, Max: 1) Configures behavior when a node fails to drain during rebalancing. Relevant only when evict_gracefully is true. (see below for nested schema)'
             enabled: (Boolean) Enables or disables the execution conditions.
+            evict_gracefully: (Boolean) Defines whether the nodes that failed to get drained until a predefined timeout, will be kept with a rebalancing.cast.ai/status=drain-failed annotation instead of forcefully drained. Replaces the deprecated keep_drain_timeout_nodes.
             execution_conditions: '(Block List, Max: 1) (see below for nested schema)'
             id: (String) The ID of this resource.
             ignore_local_persistent_volumes: (Boolean) Rebalance workloads that use local-path Persistent Volumes. THIS WILL RESULT IN DATA LOSS.
             ignore_problem_job_pods: '(Boolean) Pods spawned by Jobs or CronJobs will not prevent the Rebalancer from deleting a node on which they run. WARNING: When true, pods spawned by Jobs or CronJobs will be terminated if the Rebalancer picks a node that runs them. As such, they are likely to lose their progress.'
             ignore_problem_pods_without_controller: '(Boolean) Pods that don''t have a controller (bare pods) will not prevent the Rebalancer from deleting a node on which they run. WARNING: When true, such pods might not restart, since they have no controller to do it.'
+            ignore_problem_prevented_drain_pods: (Boolean) Pods annotated with rebalancing.cast.ai/prevented-drain=true will not prevent the Rebalancer from deleting a node on which they run.
             ignore_problem_removal_disabled_pods: '(Boolean) Pods that are marked with "removal disabled" will not prevent the Rebalancer from deleting a node on which they run. WARNING: When true, such pods will be evicted and disrupted.'
             ignore_savings: (Boolean) If true, the savings percentage will be ignored and the rebalancing will be triggered regardless of the savings percentage.
-            keep_drain_timeout_nodes: (Boolean) Defines whether the nodes that failed to get drained until a predefined timeout, will be kept with a rebalancing.cast.ai/status=drain-failed annotation instead of forcefully drained.
+            keep_drain_timeout_nodes: (Boolean, Deprecated) Defines whether the nodes that failed to get drained until a predefined timeout, will be kept with a rebalancing.cast.ai/status=drain-failed annotation instead of forcefully drained.
             launch_configuration: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
+            max_simultaneous_drains: (Number) Number of nodes to drain simultaneously. When unspecified, defaults to unlimited.
             name: (String) Name of the schedule.
             node_ttl_seconds: (Number) Specifies amount of time since node creation before the node is allowed to be considered for automated rebalancing.
-            num_targeted_nodes: (Number) Maximum number of nodes that will be selected for rebalancing.
+            num_targeted_nodes: (Number) Maximum number of nodes that will be selected for rebalancing. 0 means all nodes in the cluster can be selected.
             read: (String)
             rebalancing_min_nodes: (Number) Minimum number of nodes that should be kept in the cluster after rebalancing.
             savings_percentage: (Number) Defines the minimum percentage of savings expected.
             schedule: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             selector: (String) Node selector in JSON format.
+            split_nodes_in_batches_of: (Number) If set, the rebalancing plan is executed in batches such that at most this many additional nodes (nodes created minus nodes drained) are alive at any moment during execution, and a node is only drained after its replacement node exists. When unset, the plan executes in a single batch.
             target_node_selection_algorithm: (String) Defines the algorithm used to select the target nodes for rebalancing.
             timeouts: (Block, Optional) (see below for nested schema)
             trigger_conditions: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
@@ -2339,7 +2713,7 @@ resources:
         name: castai_sso_connection
         title: castai_sso_connection Resource - terraform-provider-castai
         examples:
-            - name: sso
+            - name: aad
               manifest: |-
                 {
                   "aad": [
@@ -2356,6 +2730,21 @@ resources:
                 aad.ad_domain: azuread_application.castai_sso.publisher_domain
                 aad.client_id: azuread_application.castai_sso.client_id
                 aad.client_secret: azuread_application_password.castai_sso.value
+            - name: keycloak
+              manifest: |-
+                {
+                  "email_domain": "example.com",
+                  "name": "keycloak_connection",
+                  "oidc": [
+                    {
+                      "client_id": "castai",
+                      "client_secret": "${var.keycloak_client_secret}",
+                      "issuer_url": "https://keycloak.example.com/realms/my-realm"
+                    }
+                  ]
+                }
+              references:
+                oidc.client_secret: var.keycloak_client_secret
         argumentDocs:
             aad: '(Block List, Max: 1) Azure AD connector (see below for nested schema)'
             ad_domain: (String) Azure AD domain
@@ -2366,12 +2755,15 @@ resources:
             delete: (String)
             email_domain: (String) Email domain of the connection
             id: (String) The ID of this resource.
+            issuer_url: (String) Issuer URL of the OpenID Connect provider
             name: (String) Connection name
+            oidc: '(Block List, Max: 1) OIDC connector (e.g. Keycloak) (see below for nested schema)'
             okta: '(Block List, Max: 1) Okta connector (see below for nested schema)'
             okta_domain: (String) Okta domain
             sync_auth_token: (String, Sensitive) Auth token generated when synchronize_user_groups is enabled. Only populated on the transition from false to true.
             synchronize_user_groups: (Boolean) When enabled, user groups from the identity provider will be synchronized with CAST AI. A sync auth token is generated on activation and stored in sync_auth_token.
             timeouts: (Block, Optional) (see below for nested schema)
+            type: (String) OIDC connection type (TYPE_BACK_CHANNEL or TYPE_FRONT_CHANNEL)
             update: (String)
         importStatements: []
     castai_workload_custom_metrics_data_source:
@@ -2537,6 +2929,11 @@ resources:
                     "container-1",
                     "container-2"
                   ],
+                  "hpa_converters": [
+                    {
+                      "type": "AVERAGE_VALUE_FROM_ORIGINAL_REQUESTS"
+                    }
+                  ],
                   "jvm": [
                     {
                       "memory": [
@@ -2587,7 +2984,18 @@ resources:
                   ],
                   "startup": [
                     {
-                      "period_seconds": 240
+                      "period_seconds": 240,
+                      "two_phase_recommendations": [
+                        {
+                          "enabled": true,
+                          "requests_on_startup": [
+                            {
+                              "cpu_cores": 0.5,
+                              "memory_gib": 1.5
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -2612,6 +3020,7 @@ resources:
             constant: (Number) Fixed bound value. For memory - MiB, for CPU - cores.
             constraints: '(Block List, Max: 1) Defines min/max bounds for the recommendation using constraint strategies. (see below for nested schema)'
             cpu: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
+            cpu_cores: (Number) CPU cores to request during startup.
             cpu_pressure: '(Block List, Max: 1) Configures CPU pressure anomaly detection thresholds. (see below for nested schema)'
             cpu_stall_threshold_percentage: (Number) Percentage of time (0-100) that a pod must experience CPU pressure to be considered under pressure.
             create: (String)
@@ -2626,6 +3035,7 @@ resources:
             gvk: |-
                 (List of String) Group, version, and kind for Kubernetes resources. Format: kind[.version][.group].
                 It can be either:
+            hpa_converters: (Block List) Configuration for converting existing HPAs when VPA is the sole optimization. If HPA management is enabled, it takes precedence over this setting. (see below for nested schema)
             id: (String) The ID of this resource.
             jvm: '(Block List, Max: 1) JVM optimization settings. (see below for nested schema)'
             key: (String) The label key to match. Required for all operators except Regex and Contains. If not specified, it will search through all labels.
@@ -2635,7 +3045,9 @@ resources:
             management_option: (String) Defines possible options for workload management.
             max: (Number, Deprecated) Max values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
             memory: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
+            memory.limit: 'block:'
             memory_event: '(Block List, Max: 1) (see below for nested schema)'
+            memory_gib: (Number) Memory in GiB to request during startup.
             min: (Number, Deprecated) Min values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
             min_pressured_pod_percentage: (Number) Percentage (0-100) of pods that must be experiencing pressure for the detector to trigger.
             multiplier: (Number) Multiplier used to calculate the resource limit. It must be defined for the MULTIPLIER strategy.
@@ -2643,8 +3055,12 @@ resources:
             names: (List of String) Defines matching by namespace names.
             namespace: '(Block List, Max: 1) Allows assigning a scaling policy based on the workload''s namespace. (see below for nested schema)'
             numerator: (Number) The numerator affects vertical stretch of function used in adaptive threshold - smaller number will create smaller threshold.It must be defined for the CUSTOM_ADAPTIVE strategy.
-            only_if_original_exist: (Boolean) Apply the strategy only when the original resource has limits defined.
-            only_if_original_lower: (Boolean) Use the original resource limits if they are higher than recommended values.
+            only_if_original_exist: |-
+                (Boolean) When set to true, limits will only be set if the workload originally had limits defined in its manifest.
+                If the original workload has no limits specified, no limits will be added.
+            only_if_original_lower: |-
+                (Boolean) When set to true, limits will only be updated if the original limits are lower than the calculated value (requests × multiplier).
+                If the original limits are already higher than the calculated value, they remain unchanged.
             operator: (String) The operator to use for matching the label.
             optimization: (Boolean) Defines whether JVM memory optimization is enabled. When enabled, JVM heap size will be adjusted based on JVM metrics, if available.
             overhead: (Number) Overhead for the recommendation, e.g. 0.1 will result in 10% higher recommendation
@@ -2657,11 +3073,13 @@ resources:
             predictive_scaling: '(Block List, Max: 1) (see below for nested schema)'
             prefer_one_by_one: (Boolean) Defines if pods should be restarted one by one to avoid service disruption.
             read: (String)
+            requests_on_startup: '(Block List, Max: 1) Defines the resource requests to use during startup. (see below for nested schema)'
             rollout_behavior: '(Block List, Max: 1) Defines the rollout behavior used when applying recommendations. Prerequisites:'
             rules: '(Block List, Min: 1) (see below for nested schema)'
             startup: '(Block List, Max: 1) (see below for nested schema)'
             threshold: (Number) Defines the confidence threshold for applying recommendations. The smaller number indicates that we require fewer metrics data points to apply recommendations - changing this value can cause applying less precise recommendations. Do not change the default unless you want to optimize with fewer data points (e.g., short-lived workloads).
             timeouts: (Block, Optional) (see below for nested schema)
+            two_phase_recommendations: '(Block List, Max: 1) Defines two-phase recommendations settings for the startup period. (see below for nested schema)'
             type: (String) Defines apply theshold strategy type.
             update: (String)
             values: (List of String) A list of values to match against the label key. It is required for In, NotIn, Regex, and Contains operators.

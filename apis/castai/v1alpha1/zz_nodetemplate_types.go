@@ -83,6 +83,28 @@ type ConstraintsAwsParameters struct {
 	CapacityReservations []CapacityReservationsParameters `json:"capacityReservations,omitempty" tf:"capacity_reservations,omitempty"`
 }
 
+type ConstraintsGCPInitParameters struct {
+
+	// (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	// GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	CapacityReservationIds []*string `json:"capacityReservationIds,omitempty" tf:"capacity_reservation_ids,omitempty"`
+}
+
+type ConstraintsGCPObservation struct {
+
+	// (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	// GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	CapacityReservationIds []*string `json:"capacityReservationIds,omitempty" tf:"capacity_reservation_ids,omitempty"`
+}
+
+type ConstraintsGCPParameters struct {
+
+	// (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	// GCP capacity reservation IDs (numeric) that this template is allowed to use.
+	// +kubebuilder:validation:Optional
+	CapacityReservationIds []*string `json:"capacityReservationIds,omitempty" tf:"capacity_reservation_ids,omitempty"`
+}
+
 type ConstraintsInitParameters struct {
 
 	// (List of String) Priority ordering of architectures, specifying no priority will pick cheapest. Allowed values: amd64, arm64.
@@ -149,6 +171,10 @@ type ConstraintsInitParameters struct {
 	// (Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
 	// Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
 	FallbackRestoreRateSeconds *float64 `json:"fallbackRestoreRateSeconds,omitempty" tf:"fallback_restore_rate_seconds,omitempty"`
+
+	// specific constraints for the node template. (see below for nested schema)
+	// GCP-specific constraints for the node template.
+	GCP []ConstraintsGCPInitParameters `json:"gcp,omitempty" tf:"gcp,omitempty"`
 
 	// (Block List, Max: 1) GPU configuration. (see below for nested schema)
 	Gpu []GpuInitParameters `json:"gpu,omitempty" tf:"gpu,omitempty"`
@@ -294,6 +320,10 @@ type ConstraintsObservation struct {
 	// (Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
 	// Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
 	FallbackRestoreRateSeconds *float64 `json:"fallbackRestoreRateSeconds,omitempty" tf:"fallback_restore_rate_seconds,omitempty"`
+
+	// specific constraints for the node template. (see below for nested schema)
+	// GCP-specific constraints for the node template.
+	GCP []ConstraintsGCPObservation `json:"gcp,omitempty" tf:"gcp,omitempty"`
 
 	// (Block List, Max: 1) GPU configuration. (see below for nested schema)
 	Gpu []GpuObservation `json:"gpu,omitempty" tf:"gpu,omitempty"`
@@ -453,6 +483,11 @@ type ConstraintsParameters struct {
 	// Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
 	// +kubebuilder:validation:Optional
 	FallbackRestoreRateSeconds *float64 `json:"fallbackRestoreRateSeconds,omitempty" tf:"fallback_restore_rate_seconds,omitempty"`
+
+	// specific constraints for the node template. (see below for nested schema)
+	// GCP-specific constraints for the node template.
+	// +kubebuilder:validation:Optional
+	GCP []ConstraintsGCPParameters `json:"gcp,omitempty" tf:"gcp,omitempty"`
 
 	// (Block List, Max: 1) GPU configuration. (see below for nested schema)
 	// +kubebuilder:validation:Optional
@@ -713,6 +748,10 @@ type DedicatedNodeAffinityInitParameters struct {
 	// Instance/node types in this node group.
 	InstanceTypes []*string `json:"instanceTypes,omitempty" tf:"instance_types,omitempty"`
 
+	// (Number) Max CPU cores per node.
+	// Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+	MaxCPU *float64 `json:"maxCpu,omitempty" tf:"max_cpu,omitempty"`
+
 	// (Number) Minimal number of GPUs per node.
 	// Minimal number of GPUs per node.
 	MinGpusPerNode *float64 `json:"minGpusPerNode,omitempty" tf:"min_gpus_per_node,omitempty"`
@@ -738,6 +777,10 @@ type DedicatedNodeAffinityObservation struct {
 	// (List of String) Instance/node types in this node group.
 	// Instance/node types in this node group.
 	InstanceTypes []*string `json:"instanceTypes,omitempty" tf:"instance_types,omitempty"`
+
+	// (Number) Max CPU cores per node.
+	// Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+	MaxCPU *float64 `json:"maxCpu,omitempty" tf:"max_cpu,omitempty"`
 
 	// (Number) Minimal number of GPUs per node.
 	// Minimal number of GPUs per node.
@@ -769,6 +812,11 @@ type DedicatedNodeAffinityParameters struct {
 	// +kubebuilder:validation:Optional
 	InstanceTypes []*string `json:"instanceTypes" tf:"instance_types,omitempty"`
 
+	// (Number) Max CPU cores per node.
+	// Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+	// +kubebuilder:validation:Optional
+	MaxCPU *float64 `json:"maxCpu,omitempty" tf:"max_cpu,omitempty"`
+
 	// (Number) Minimal number of GPUs per node.
 	// Minimal number of GPUs per node.
 	// +kubebuilder:validation:Optional
@@ -778,6 +826,41 @@ type DedicatedNodeAffinityParameters struct {
 	// Name of node group.
 	// +kubebuilder:validation:Optional
 	Name *string `json:"name" tf:"name,omitempty"`
+}
+
+type EdgeLocationConfigInitParameters struct {
+
+	// (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	// Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	EdgeConfigID *string `json:"edgeConfigId,omitempty" tf:"edge_config_id,omitempty"`
+
+	// (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	// Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	EdgeLocationID *string `json:"edgeLocationId,omitempty" tf:"edge_location_id,omitempty"`
+}
+
+type EdgeLocationConfigObservation struct {
+
+	// (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	// Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	EdgeConfigID *string `json:"edgeConfigId,omitempty" tf:"edge_config_id,omitempty"`
+
+	// (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	// Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	EdgeLocationID *string `json:"edgeLocationId,omitempty" tf:"edge_location_id,omitempty"`
+}
+
+type EdgeLocationConfigParameters struct {
+
+	// (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	// Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+	// +kubebuilder:validation:Optional
+	EdgeConfigID *string `json:"edgeConfigId,omitempty" tf:"edge_config_id,omitempty"`
+
+	// (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	// Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+	// +kubebuilder:validation:Optional
+	EdgeLocationID *string `json:"edgeLocationId" tf:"edge_location_id,omitempty"`
 }
 
 type GpuInitParameters struct {
@@ -1028,7 +1111,11 @@ type NodeTemplateInitParameters struct {
 	// Custom taints to be added to the nodes created from this template. `shouldTaint` has to be `true` in order to create/update the node template with custom taints. If `shouldTaint` is `true`, but no custom taints are provided, the nodes will be tainted with the default node template taint.
 	CustomTaints []CustomTaintsInitParameters `json:"customTaints,omitempty" tf:"custom_taints,omitempty"`
 
-	// (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+	// (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+	// List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+	EdgeLocationConfig []EdgeLocationConfigInitParameters `json:"edgeLocationConfig,omitempty" tf:"edge_location_config,omitempty"`
+
+	// (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	// List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	EdgeLocationIds []*string `json:"edgeLocationIds,omitempty" tf:"edge_location_ids,omitempty"`
 
@@ -1059,6 +1146,10 @@ type NodeTemplateInitParameters struct {
 	// (Boolean) Marks whether the templated nodes will have a taint.
 	// Marks whether the templated nodes will have a taint.
 	ShouldTaint *bool `json:"shouldTaint,omitempty" tf:"should_taint,omitempty"`
+
+	// initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+	// Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+	StuckPodResizeReconciliation []StuckPodResizeReconciliationInitParameters `json:"stuckPodResizeReconciliation,omitempty" tf:"stuck_pod_resize_reconciliation,omitempty"`
 }
 
 type NodeTemplateObservation struct {
@@ -1095,7 +1186,11 @@ type NodeTemplateObservation struct {
 	// Custom taints to be added to the nodes created from this template. `shouldTaint` has to be `true` in order to create/update the node template with custom taints. If `shouldTaint` is `true`, but no custom taints are provided, the nodes will be tainted with the default node template taint.
 	CustomTaints []CustomTaintsObservation `json:"customTaints,omitempty" tf:"custom_taints,omitempty"`
 
-	// (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+	// (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+	// List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+	EdgeLocationConfig []EdgeLocationConfigObservation `json:"edgeLocationConfig,omitempty" tf:"edge_location_config,omitempty"`
+
+	// (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	// List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	EdgeLocationIds []*string `json:"edgeLocationIds,omitempty" tf:"edge_location_ids,omitempty"`
 
@@ -1129,6 +1224,10 @@ type NodeTemplateObservation struct {
 	// (Boolean) Marks whether the templated nodes will have a taint.
 	// Marks whether the templated nodes will have a taint.
 	ShouldTaint *bool `json:"shouldTaint,omitempty" tf:"should_taint,omitempty"`
+
+	// initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+	// Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+	StuckPodResizeReconciliation []StuckPodResizeReconciliationObservation `json:"stuckPodResizeReconciliation,omitempty" tf:"stuck_pod_resize_reconciliation,omitempty"`
 }
 
 type NodeTemplateParameters struct {
@@ -1191,7 +1290,12 @@ type NodeTemplateParameters struct {
 	// +kubebuilder:validation:Optional
 	CustomTaints []CustomTaintsParameters `json:"customTaints,omitempty" tf:"custom_taints,omitempty"`
 
-	// (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+	// (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+	// List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+	// +kubebuilder:validation:Optional
+	EdgeLocationConfig []EdgeLocationConfigParameters `json:"edgeLocationConfig,omitempty" tf:"edge_location_config,omitempty"`
+
+	// (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	// List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
 	// +kubebuilder:validation:Optional
 	EdgeLocationIds []*string `json:"edgeLocationIds,omitempty" tf:"edge_location_ids,omitempty"`
@@ -1230,6 +1334,11 @@ type NodeTemplateParameters struct {
 	// Marks whether the templated nodes will have a taint.
 	// +kubebuilder:validation:Optional
 	ShouldTaint *bool `json:"shouldTaint,omitempty" tf:"should_taint,omitempty"`
+
+	// initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+	// Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+	// +kubebuilder:validation:Optional
+	StuckPodResizeReconciliation []StuckPodResizeReconciliationParameters `json:"stuckPodResizeReconciliation,omitempty" tf:"stuck_pod_resize_reconciliation,omitempty"`
 }
 
 type PriceAdjustmentConfigurationInitParameters struct {
@@ -1325,6 +1434,28 @@ type SharingConfigurationParameters struct {
 	// Defines number of shared clients for specific GPU device.
 	// +kubebuilder:validation:Optional
 	SharedClientsPerGpu *float64 `json:"sharedClientsPerGpu" tf:"shared_clients_per_gpu,omitempty"`
+}
+
+type StuckPodResizeReconciliationInitParameters struct {
+
+	// (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	// Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	Enabled *bool `json:"enabled,omitempty" tf:"enabled,omitempty"`
+}
+
+type StuckPodResizeReconciliationObservation struct {
+
+	// (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	// Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	Enabled *bool `json:"enabled,omitempty" tf:"enabled,omitempty"`
+}
+
+type StuckPodResizeReconciliationParameters struct {
+
+	// (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	// Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+	// +kubebuilder:validation:Optional
+	Enabled *bool `json:"enabled,omitempty" tf:"enabled,omitempty"`
 }
 
 // NodeTemplateSpec defines the desired state of NodeTemplate

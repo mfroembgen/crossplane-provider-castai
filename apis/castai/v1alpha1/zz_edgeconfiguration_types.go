@@ -137,11 +137,17 @@ type EdgeConfigurationInitParameters struct {
 	// Name of the edge configuration
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
+	// Nebius specific configuration
+	Nebius *NebiusInitParameters `json:"nebius,omitempty" tf:"nebius,omitempty"`
+
 	// OCI specific configuration
 	Oci *OciInitParameters `json:"oci,omitempty" tf:"oci,omitempty"`
 
 	// CAST AI organization ID
 	OrganizationID *string `json:"organizationId,omitempty" tf:"organization_id,omitempty"`
+
+	// Base64 encoded SSH public key to be used for provisioned nodes.
+	SSHPublicKey *string `json:"sshPublicKey,omitempty" tf:"ssh_public_key,omitempty"`
 
 	// Base64 encoded user data to run on the edge as part of bootstrap. The payload must start with either `#cloud-config` (cloud-init YAML) or `#!` (shell script with a shebang)
 	UserDataBase64 *string `json:"userDataBase64,omitempty" tf:"user_data_base64,omitempty"`
@@ -175,11 +181,17 @@ type EdgeConfigurationObservation struct {
 	// Name of the edge configuration
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
+	// Nebius specific configuration
+	Nebius *NebiusObservation `json:"nebius,omitempty" tf:"nebius,omitempty"`
+
 	// OCI specific configuration
 	Oci *OciObservation `json:"oci,omitempty" tf:"oci,omitempty"`
 
 	// CAST AI organization ID
 	OrganizationID *string `json:"organizationId,omitempty" tf:"organization_id,omitempty"`
+
+	// Base64 encoded SSH public key to be used for provisioned nodes.
+	SSHPublicKey *string `json:"sshPublicKey,omitempty" tf:"ssh_public_key,omitempty"`
 
 	// Base64 encoded user data to run on the edge as part of bootstrap. The payload must start with either `#cloud-config` (cloud-init YAML) or `#!` (shell script with a shebang)
 	UserDataBase64 *string `json:"userDataBase64,omitempty" tf:"user_data_base64,omitempty"`
@@ -233,6 +245,10 @@ type EdgeConfigurationParameters struct {
 	// +kubebuilder:validation:Optional
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
 
+	// Nebius specific configuration
+	// +kubebuilder:validation:Optional
+	Nebius *NebiusParameters `json:"nebius,omitempty" tf:"nebius,omitempty"`
+
 	// OCI specific configuration
 	// +kubebuilder:validation:Optional
 	Oci *OciParameters `json:"oci,omitempty" tf:"oci,omitempty"`
@@ -240,6 +256,10 @@ type EdgeConfigurationParameters struct {
 	// CAST AI organization ID
 	// +kubebuilder:validation:Optional
 	OrganizationID *string `json:"organizationId,omitempty" tf:"organization_id,omitempty"`
+
+	// Base64 encoded SSH public key to be used for provisioned nodes.
+	// +kubebuilder:validation:Optional
+	SSHPublicKey *string `json:"sshPublicKey,omitempty" tf:"ssh_public_key,omitempty"`
 
 	// Base64 encoded user data to run on the edge as part of bootstrap. The payload must start with either `#cloud-config` (cloud-init YAML) or `#!` (shell script with a shebang)
 	// +kubebuilder:validation:Optional
@@ -286,6 +306,68 @@ type GCPParameters struct {
 	// +kubebuilder:validation:Optional
 	// +mapType=granular
 	Labels map[string]*string `json:"labels,omitempty" tf:"labels,omitempty"`
+}
+
+type NebiusInitParameters struct {
+
+	// Boot disk size in GiB
+	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
+
+	// GPU cluster info
+	GpuCluster *string `json:"gpuCluster,omitempty" tf:"gpu_cluster,omitempty"`
+
+	// ImageID to be used for edge creation. It can be an image ID or a name filter
+	ImageID *string `json:"imageId,omitempty" tf:"image_id,omitempty"`
+
+	// Instance/VM labels
+	// +mapType=granular
+	Labels map[string]*string `json:"labels,omitempty" tf:"labels,omitempty"`
+
+	// Capacity block reservation IDs
+	ReservationIds []*string `json:"reservationIds,omitempty" tf:"reservation_ids,omitempty"`
+}
+
+type NebiusObservation struct {
+
+	// Boot disk size in GiB
+	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
+
+	// GPU cluster info
+	GpuCluster *string `json:"gpuCluster,omitempty" tf:"gpu_cluster,omitempty"`
+
+	// ImageID to be used for edge creation. It can be an image ID or a name filter
+	ImageID *string `json:"imageId,omitempty" tf:"image_id,omitempty"`
+
+	// Instance/VM labels
+	// +mapType=granular
+	Labels map[string]*string `json:"labels,omitempty" tf:"labels,omitempty"`
+
+	// Capacity block reservation IDs
+	ReservationIds []*string `json:"reservationIds,omitempty" tf:"reservation_ids,omitempty"`
+}
+
+type NebiusParameters struct {
+
+	// Boot disk size in GiB
+	// +kubebuilder:validation:Optional
+	BootDiskSizeGib *float64 `json:"bootDiskSizeGib,omitempty" tf:"boot_disk_size_gib,omitempty"`
+
+	// GPU cluster info
+	// +kubebuilder:validation:Optional
+	GpuCluster *string `json:"gpuCluster,omitempty" tf:"gpu_cluster,omitempty"`
+
+	// ImageID to be used for edge creation. It can be an image ID or a name filter
+	// +kubebuilder:validation:Optional
+	ImageID *string `json:"imageId,omitempty" tf:"image_id,omitempty"`
+
+	// Instance/VM labels
+	// +kubebuilder:validation:Optional
+	// +mapType=granular
+	Labels map[string]*string `json:"labels,omitempty" tf:"labels,omitempty"`
+
+	// Capacity block reservation IDs
+	// +kubebuilder:validation:Optional
+	ReservationIds []*string `json:"reservationIds,omitempty" tf:"reservation_ids,omitempty"`
 }
 
 type OciInitParameters struct {

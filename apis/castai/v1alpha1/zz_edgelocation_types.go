@@ -85,24 +85,79 @@ type CniParameters struct {
 
 type ControlPlaneInitParameters struct {
 
+	// (Number) The port used for the API server. Defaults to the system value when unset.
+	// The port used for the API server. Defaults to the system value when unset.
+	APIServerPort *float64 `json:"apiServerPort,omitempty" tf:"api_server_port,omitempty"`
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the API server from outside the cluster, if in-cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
+
 	// (Boolean) Whether to use HA mode for control plane. If not set, default is HA.
 	// Whether to use HA mode for control plane. If not set, default is HA.
 	Ha *bool `json:"ha,omitempty" tf:"ha,omitempty"`
+
+	// (Number) The port used for the konnectivity server. Defaults to the system value when unset.
+	// The port used for the konnectivity server. Defaults to the system value when unset.
+	KonnectivityPort *float64 `json:"konnectivityPort,omitempty" tf:"konnectivity_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the control plane service.
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
 }
 
 type ControlPlaneObservation struct {
 
+	// (Number) The port used for the API server. Defaults to the system value when unset.
+	// The port used for the API server. Defaults to the system value when unset.
+	APIServerPort *float64 `json:"apiServerPort,omitempty" tf:"api_server_port,omitempty"`
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the API server from outside the cluster, if in-cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
+
 	// (Boolean) Whether to use HA mode for control plane. If not set, default is HA.
 	// Whether to use HA mode for control plane. If not set, default is HA.
 	Ha *bool `json:"ha,omitempty" tf:"ha,omitempty"`
+
+	// (Number) The port used for the konnectivity server. Defaults to the system value when unset.
+	// The port used for the konnectivity server. Defaults to the system value when unset.
+	KonnectivityPort *float64 `json:"konnectivityPort,omitempty" tf:"konnectivity_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the control plane service.
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
 }
 
 type ControlPlaneParameters struct {
+
+	// (Number) The port used for the API server. Defaults to the system value when unset.
+	// The port used for the API server. Defaults to the system value when unset.
+	// +kubebuilder:validation:Optional
+	APIServerPort *float64 `json:"apiServerPort,omitempty" tf:"api_server_port,omitempty"`
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the API server from outside the cluster, if in-cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// +kubebuilder:validation:Optional
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
 
 	// (Boolean) Whether to use HA mode for control plane. If not set, default is HA.
 	// Whether to use HA mode for control plane. If not set, default is HA.
 	// +kubebuilder:validation:Optional
 	Ha *bool `json:"ha,omitempty" tf:"ha,omitempty"`
+
+	// (Number) The port used for the konnectivity server. Defaults to the system value when unset.
+	// The port used for the konnectivity server. Defaults to the system value when unset.
+	// +kubebuilder:validation:Optional
+	KonnectivityPort *float64 `json:"konnectivityPort,omitempty" tf:"konnectivity_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the control plane service.
+	// +kubebuilder:validation:Optional
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
 }
 
 type EdgeLocationAwsInitParameters struct {
@@ -416,9 +471,17 @@ type EdgeLocationInitParameters struct {
 	// GCP configuration for the edge location
 	GCP *EdgeLocationGCPInitParameters `json:"gcp,omitempty" tf:"gcp,omitempty"`
 
+	// (Attributes) Liqo configuration for the edge cluster. (see below for nested schema)
+	// Liqo configuration for the edge cluster.
+	Liqo *LiqoInitParameters `json:"liqo,omitempty" tf:"liqo,omitempty"`
+
 	// (String) Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	// Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
+
+	// (Attributes) Nebius configuration for the edge location (see below for nested schema)
+	// Nebius configuration for the edge location
+	Nebius *EdgeLocationNebiusInitParameters `json:"nebius,omitempty" tf:"nebius,omitempty"`
 
 	// (Attributes) Edge cluster networking configuration. (see below for nested schema)
 	// Edge cluster networking configuration.
@@ -439,6 +502,93 @@ type EdgeLocationInitParameters struct {
 	// (Attributes List) List of availability zones for the edge location (see below for nested schema)
 	// List of availability zones for the edge location
 	Zones []ZonesInitParameters `json:"zones,omitempty" tf:"zones,omitempty"`
+}
+
+type EdgeLocationNebiusInitParameters struct {
+
+	// (String) The ID of the VPC network to be used in the selected region
+	// The ID of the VPC network to be used in the selected region
+	NetworkID *string `json:"networkId,omitempty" tf:"network_id,omitempty"`
+
+	// (String) Nebius project ID that owns the edge location resources
+	// Nebius project ID that owns the edge location resources
+	ParentID *string `json:"parentId,omitempty" tf:"parent_id,omitempty"`
+
+	// (String) Security group ID to be used in the selected region
+	// The ID of the security group to be used in the selected region
+	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
+
+	// (String) Nebius service account ID to be impersonated by CAST AI
+	// Nebius service account ID to be impersonated by CAST AI
+	ServiceAccountID *string `json:"serviceAccountId,omitempty" tf:"service_account_id,omitempty"`
+
+	// (String) VPC Subnet IPv4 CIDR block
+	// The IPv4 CIDR block of the subnet
+	SubnetCidr *string `json:"subnetCidr,omitempty" tf:"subnet_cidr,omitempty"`
+
+	// (String) The ID of the subnet to be used in the selected region
+	// The ID of the subnet to be used in the selected region
+	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
+}
+
+type EdgeLocationNebiusObservation struct {
+
+	// (String) The ID of the VPC network to be used in the selected region
+	// The ID of the VPC network to be used in the selected region
+	NetworkID *string `json:"networkId,omitempty" tf:"network_id,omitempty"`
+
+	// (String) Nebius project ID that owns the edge location resources
+	// Nebius project ID that owns the edge location resources
+	ParentID *string `json:"parentId,omitempty" tf:"parent_id,omitempty"`
+
+	// (String) Security group ID to be used in the selected region
+	// The ID of the security group to be used in the selected region
+	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
+
+	// (String) Nebius service account ID to be impersonated by CAST AI
+	// Nebius service account ID to be impersonated by CAST AI
+	ServiceAccountID *string `json:"serviceAccountId,omitempty" tf:"service_account_id,omitempty"`
+
+	// (String) VPC Subnet IPv4 CIDR block
+	// The IPv4 CIDR block of the subnet
+	SubnetCidr *string `json:"subnetCidr,omitempty" tf:"subnet_cidr,omitempty"`
+
+	// (String) The ID of the subnet to be used in the selected region
+	// The ID of the subnet to be used in the selected region
+	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
+}
+
+type EdgeLocationNebiusParameters struct {
+
+	// (String) The ID of the VPC network to be used in the selected region
+	// The ID of the VPC network to be used in the selected region
+	// +kubebuilder:validation:Optional
+	NetworkID *string `json:"networkId,omitempty" tf:"network_id,omitempty"`
+
+	// (String) Nebius project ID that owns the edge location resources
+	// Nebius project ID that owns the edge location resources
+	// +kubebuilder:validation:Optional
+	ParentID *string `json:"parentId,omitempty" tf:"parent_id,omitempty"`
+
+	// (String) Security group ID to be used in the selected region
+	// The ID of the security group to be used in the selected region
+	// +kubebuilder:validation:Optional
+	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
+
+	// (String) Nebius service account ID to be impersonated by CAST AI
+	// Nebius service account ID to be impersonated by CAST AI
+	// +kubebuilder:validation:Optional
+	ServiceAccountID *string `json:"serviceAccountId,omitempty" tf:"service_account_id,omitempty"`
+
+	// (String) VPC Subnet IPv4 CIDR block
+	// The IPv4 CIDR block of the subnet
+	// +kubebuilder:validation:Optional
+	SubnetCidr *string `json:"subnetCidr,omitempty" tf:"subnet_cidr,omitempty"`
+
+	// (String) The ID of the subnet to be used in the selected region
+	// The ID of the subnet to be used in the selected region
+	// +kubebuilder:validation:Optional
+	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
 }
 
 type EdgeLocationObservation struct {
@@ -482,9 +632,17 @@ type EdgeLocationObservation struct {
 	// (String) Edge location ID
 	ID *string `json:"id,omitempty" tf:"id,omitempty"`
 
+	// (Attributes) Liqo configuration for the edge cluster. (see below for nested schema)
+	// Liqo configuration for the edge cluster.
+	Liqo *LiqoObservation `json:"liqo,omitempty" tf:"liqo,omitempty"`
+
 	// (String) Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	// Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
+
+	// (Attributes) Nebius configuration for the edge location (see below for nested schema)
+	// Nebius configuration for the edge location
+	Nebius *EdgeLocationNebiusObservation `json:"nebius,omitempty" tf:"nebius,omitempty"`
 
 	// (Attributes) Edge cluster networking configuration. (see below for nested schema)
 	// Edge cluster networking configuration.
@@ -525,7 +683,7 @@ type EdgeLocationOciInitParameters struct {
 	// OCI network security group ID
 	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
 
-	// (String) OCI subnet ID of edge location
+	// (String) The ID of the subnet to be used in the selected region
 	// OCI subnet ID of edge location
 	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
 
@@ -556,7 +714,7 @@ type EdgeLocationOciObservation struct {
 	// OCI network security group ID
 	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
 
-	// (String) OCI subnet ID of edge location
+	// (String) The ID of the subnet to be used in the selected region
 	// OCI subnet ID of edge location
 	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
 
@@ -599,7 +757,7 @@ type EdgeLocationOciParameters struct {
 	// +kubebuilder:validation:Optional
 	SecurityGroupID *string `json:"securityGroupId,omitempty" tf:"security_group_id,omitempty"`
 
-	// (String) OCI subnet ID of edge location
+	// (String) The ID of the subnet to be used in the selected region
 	// OCI subnet ID of edge location
 	// +kubebuilder:validation:Optional
 	SubnetID *string `json:"subnetId,omitempty" tf:"subnet_id,omitempty"`
@@ -676,10 +834,20 @@ type EdgeLocationParameters struct {
 	// +kubebuilder:validation:Optional
 	GCP *EdgeLocationGCPParameters `json:"gcp,omitempty" tf:"gcp,omitempty"`
 
+	// (Attributes) Liqo configuration for the edge cluster. (see below for nested schema)
+	// Liqo configuration for the edge cluster.
+	// +kubebuilder:validation:Optional
+	Liqo *LiqoParameters `json:"liqo,omitempty" tf:"liqo,omitempty"`
+
 	// (String) Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	// Name of the edge location. Must be unique and relatively short as it's used for creating service accounts.
 	// +kubebuilder:validation:Optional
 	Name *string `json:"name,omitempty" tf:"name,omitempty"`
+
+	// (Attributes) Nebius configuration for the edge location (see below for nested schema)
+	// Nebius configuration for the edge location
+	// +kubebuilder:validation:Optional
+	Nebius *EdgeLocationNebiusParameters `json:"nebius,omitempty" tf:"nebius,omitempty"`
 
 	// (Attributes) Edge cluster networking configuration. (see below for nested schema)
 	// Edge cluster networking configuration.
@@ -705,6 +873,108 @@ type EdgeLocationParameters struct {
 	// List of availability zones for the edge location
 	// +kubebuilder:validation:Optional
 	Zones []ZonesParameters `json:"zones,omitempty" tf:"zones,omitempty"`
+}
+
+type GatewayServerInitParameters struct {
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the Liqo gateway server from outside the cluster.
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
+
+	// (Number) The port used for the Liqo gateway server.
+	// The port used for the Liqo gateway server.
+	ExternalPort *float64 `json:"externalPort,omitempty" tf:"external_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the Liqo gateway service.
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
+
+	// (Map of String) Custom labels to apply to the Liqo gateway service.
+	// Custom labels to apply to the Liqo gateway service.
+	// +mapType=granular
+	ServiceLabels map[string]*string `json:"serviceLabels,omitempty" tf:"service_labels,omitempty"`
+}
+
+type GatewayServerObservation struct {
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the Liqo gateway server from outside the cluster.
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
+
+	// (Number) The port used for the Liqo gateway server.
+	// The port used for the Liqo gateway server.
+	ExternalPort *float64 `json:"externalPort,omitempty" tf:"external_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the Liqo gateway service.
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
+
+	// (Map of String) Custom labels to apply to the Liqo gateway service.
+	// Custom labels to apply to the Liqo gateway service.
+	// +mapType=granular
+	ServiceLabels map[string]*string `json:"serviceLabels,omitempty" tf:"service_labels,omitempty"`
+}
+
+type GatewayServerParameters struct {
+
+	// cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+	// The IP address or hostname used to reach the Liqo gateway server from outside the cluster.
+	// +kubebuilder:validation:Optional
+	ExternalAddress *string `json:"externalAddress,omitempty" tf:"external_address,omitempty"`
+
+	// (Number) The port used for the Liqo gateway server.
+	// The port used for the Liqo gateway server.
+	// +kubebuilder:validation:Optional
+	ExternalPort *float64 `json:"externalPort,omitempty" tf:"external_port,omitempty"`
+
+	// (Map of String) Custom annotations to apply to the control plane service.
+	// Custom annotations to apply to the Liqo gateway service.
+	// +kubebuilder:validation:Optional
+	// +mapType=granular
+	ServiceAnnotations map[string]*string `json:"serviceAnnotations,omitempty" tf:"service_annotations,omitempty"`
+
+	// (Map of String) Custom labels to apply to the Liqo gateway service.
+	// Custom labels to apply to the Liqo gateway service.
+	// +kubebuilder:validation:Optional
+	// +mapType=granular
+	ServiceLabels map[string]*string `json:"serviceLabels,omitempty" tf:"service_labels,omitempty"`
+}
+
+type LiqoInitParameters struct {
+
+	// (Number) Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	// Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	GatewayReplicas *float64 `json:"gatewayReplicas,omitempty" tf:"gateway_replicas,omitempty"`
+
+	// (Attributes) Configuration overrides for the Liqo gateway server. (see below for nested schema)
+	// Configuration overrides for the Liqo gateway server.
+	GatewayServer *GatewayServerInitParameters `json:"gatewayServer,omitempty" tf:"gateway_server,omitempty"`
+}
+
+type LiqoObservation struct {
+
+	// (Number) Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	// Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	GatewayReplicas *float64 `json:"gatewayReplicas,omitempty" tf:"gateway_replicas,omitempty"`
+
+	// (Attributes) Configuration overrides for the Liqo gateway server. (see below for nested schema)
+	// Configuration overrides for the Liqo gateway server.
+	GatewayServer *GatewayServerObservation `json:"gatewayServer,omitempty" tf:"gateway_server,omitempty"`
+}
+
+type LiqoParameters struct {
+
+	// (Number) Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	// Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
+	// +kubebuilder:validation:Optional
+	GatewayReplicas *float64 `json:"gatewayReplicas,omitempty" tf:"gateway_replicas,omitempty"`
+
+	// (Attributes) Configuration overrides for the Liqo gateway server. (see below for nested schema)
+	// Configuration overrides for the Liqo gateway server.
+	// +kubebuilder:validation:Optional
+	GatewayServer *GatewayServerParameters `json:"gatewayServer,omitempty" tf:"gateway_server,omitempty"`
 }
 
 type NetworkingInitParameters struct {

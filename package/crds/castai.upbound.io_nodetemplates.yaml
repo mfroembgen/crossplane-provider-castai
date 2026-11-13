@@ -407,6 +407,11 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              maxCpu:
+                                description: |-
+                                  (Number) Max CPU cores per node.
+                                  Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+                                type: number
                               minGpusPerNode:
                                 description: |-
                                   (Number) Minimal number of GPUs per node.
@@ -429,6 +434,21 @@ spec:
                             (Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                             Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                           type: number
+                        gcp:
+                          description: |-
+                            specific constraints for the node template. (see below for nested schema)
+                            GCP-specific constraints for the node template.
+                          items:
+                            properties:
+                              capacityReservationIds:
+                                description: |-
+                                  (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                  GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
                         gpu:
                           description: '(Block List, Max: 1) GPU configuration. (see
                             below for nested schema)'
@@ -640,9 +660,27 @@ spec:
                           type: string
                       type: object
                     type: array
+                  edgeLocationConfig:
+                    description: |-
+                      (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+                      List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+                    items:
+                      properties:
+                        edgeConfigId:
+                          description: |-
+                            (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                            Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                          type: string
+                        edgeLocationId:
+                          description: |-
+                            (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                            Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                          type: string
+                      type: object
+                    type: array
                   edgeLocationIds:
                     description: |-
-                      (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+                      (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                       List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                     items:
                       type: string
@@ -734,6 +772,19 @@ spec:
                       (Boolean) Marks whether the templated nodes will have a taint.
                       Marks whether the templated nodes will have a taint.
                     type: boolean
+                  stuckPodResizeReconciliation:
+                    description: |-
+                      initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+                      Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+                    items:
+                      properties:
+                        enabled:
+                          description: |-
+                            (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                            Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                          type: boolean
+                      type: object
+                    type: array
                 type: object
               initProvider:
                 description: |-
@@ -1082,6 +1133,11 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              maxCpu:
+                                description: |-
+                                  (Number) Max CPU cores per node.
+                                  Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+                                type: number
                               minGpusPerNode:
                                 description: |-
                                   (Number) Minimal number of GPUs per node.
@@ -1104,6 +1160,21 @@ spec:
                             (Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                             Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                           type: number
+                        gcp:
+                          description: |-
+                            specific constraints for the node template. (see below for nested schema)
+                            GCP-specific constraints for the node template.
+                          items:
+                            properties:
+                              capacityReservationIds:
+                                description: |-
+                                  (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                  GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
                         gpu:
                           description: '(Block List, Max: 1) GPU configuration. (see
                             below for nested schema)'
@@ -1315,9 +1386,27 @@ spec:
                           type: string
                       type: object
                     type: array
+                  edgeLocationConfig:
+                    description: |-
+                      (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+                      List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+                    items:
+                      properties:
+                        edgeConfigId:
+                          description: |-
+                            (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                            Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                          type: string
+                        edgeLocationId:
+                          description: |-
+                            (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                            Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                          type: string
+                      type: object
+                    type: array
                   edgeLocationIds:
                     description: |-
-                      (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+                      (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                       List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                     items:
                       type: string
@@ -1409,6 +1498,19 @@ spec:
                       (Boolean) Marks whether the templated nodes will have a taint.
                       Marks whether the templated nodes will have a taint.
                     type: boolean
+                  stuckPodResizeReconciliation:
+                    description: |-
+                      initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+                      Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+                    items:
+                      properties:
+                        enabled:
+                          description: |-
+                            (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                            Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                          type: boolean
+                      type: object
+                    type: array
                 type: object
               managementPolicies:
                 default:
@@ -1769,6 +1871,11 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              maxCpu:
+                                description: |-
+                                  (Number) Max CPU cores per node.
+                                  Maximum number of CPUs that can be provisioned from this dedicated node affinity across all nodes for the specific node template. If not set, no CPU cap is applied. If cpus_per_gpu is set, max_cpu must be a multiple of cpus_per_gpu.
+                                type: number
                               minGpusPerNode:
                                 description: |-
                                   (Number) Minimal number of GPUs per node.
@@ -1791,6 +1898,21 @@ spec:
                             (Number) Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                             Fallback restore rate in seconds: defines how much time should pass before spot fallback should be attempted to be restored to real spot.
                           type: number
+                        gcp:
+                          description: |-
+                            specific constraints for the node template. (see below for nested schema)
+                            GCP-specific constraints for the node template.
+                          items:
+                            properties:
+                              capacityReservationIds:
+                                description: |-
+                                  (List of String) GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                  GCP capacity reservation IDs (numeric) that this template is allowed to use.
+                                items:
+                                  type: string
+                                type: array
+                            type: object
+                          type: array
                         gpu:
                           description: '(Block List, Max: 1) GPU configuration. (see
                             below for nested schema)'
@@ -2002,9 +2124,27 @@ spec:
                           type: string
                       type: object
                     type: array
+                  edgeLocationConfig:
+                    description: |-
+                      (Block List) List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids. (see below for nested schema)
+                      List of edge location configurations to associate with this node template. Each entry pairs an edge location with an optional edge configuration. Conflicts with edge_location_ids.
+                    items:
+                      properties:
+                        edgeConfigId:
+                          description: |-
+                            (String) Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                            Optional edge configuration ID to apply at this edge location. Must be a valid UUID referencing a castai_edge_configuration resource.
+                          type: string
+                        edgeLocationId:
+                          description: |-
+                            (String) Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                            Edge location ID to associate with this node template. Must be a valid UUID referencing a castai_edge_location resource.
+                          type: string
+                      type: object
+                    type: array
                   edgeLocationIds:
                     description: |-
-                      (List of String) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
+                      (List of String, Deprecated) List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                       List of edge location IDs to associate with this node template. Must be valid UUIDs referencing castai_edge_location resources.
                     items:
                       type: string
@@ -2099,6 +2239,19 @@ spec:
                       (Boolean) Marks whether the templated nodes will have a taint.
                       Marks whether the templated nodes will have a taint.
                     type: boolean
+                  stuckPodResizeReconciliation:
+                    description: |-
+                      initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize. (see below for nested schema)
+                      Stuck Pod Resize Reconciliation (SPR) configuration for nodes created from this template. When enabled, the autoscaler discovers pods whose woop-initiated in-place resize failed or got stuck, protects them from woop's eviction, and partially or fully drains the node to enable the resize.
+                    items:
+                      properties:
+                        enabled:
+                          description: |-
+                            (Boolean) Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                            Enable/disable Stuck Pod Resize Reconciliation. Defaults to false. Setting it to false is equivalent to omitting the block.
+                          type: boolean
+                      type: object
+                    type: array
                 type: object
               conditions:
                 description: Conditions of the resource.
