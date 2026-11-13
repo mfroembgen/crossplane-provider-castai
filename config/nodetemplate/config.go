@@ -18,7 +18,8 @@ func Configure(p *config.Provider) {
 			},
 		}
 		r.LateInitializer = config.LateInitializer{
-			IgnoredFields: []string{"custom_labels"},
+			// An omitted networking mode tells CAST AI to keep its current mode.
+			IgnoredFields: []string{"custom_labels", "clm_networking_mode"},
 		}
 	})
 }
