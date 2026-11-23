@@ -13,7 +13,7 @@ This fork preserves native HPA settings and embeds the matching
 Install the provider by using the following command after changing the image tag
 to the [latest release](https://github.com/mfroembgen/crossplane-provider-castai/releases):
 ```
-up ctp provider install ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
+up ctp provider install ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.43.0-tf-9.20.0.1
 ```
 
 Alternatively, you can use declarative installation:
@@ -24,7 +24,7 @@ kind: Provider
 metadata:
   name: crossplane-provider-castai
 spec:
-  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
+  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.43.0-tf-9.20.0.1
 EOF
 ```
 
@@ -52,7 +52,7 @@ kind: Provider
 metadata:
   name: crossplane-provider-castai
 spec:
-  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
+  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.43.0-tf-9.20.0.1
   runtimeConfigRef:
     name: debug-config
 EOF
