@@ -1070,6 +1070,7 @@ resources:
             values: (String) Helm values for the addon, encoded as a JSON object. Deep-merged over the chart's default values.
             vcn_cidr: (String) OCI VCN IPv4 CIDR block
             vcn_id: (String) OCI virtual cloud network ID
+            vcn_peered: (Boolean) Whether existing VCN is peered with main cluster's network. Field is ignored if vcn_id is not provided or main cluster does not support internal load balancers. Omit the attribute instead of setting it to false to disable peering.
             vpc_cidr: (String) VPC IPv4 CIDR block
             vpc_id: (String) VPC ID to be used in the selected region
             vpc_peered: (Boolean) Whether existing VPC is peered with main cluster's VPC. Field is ignored if vpc_id is not provided or main cluster is not EKS
@@ -1427,25 +1428,6 @@ resources:
             timeouts: (Block, Optional) (see below for nested schema)
             update: (String)
         importStatements: []
-    castai_gke_cluster_id Resource - CAST AI:
-        subCategory: ""
-        description: GKE cluster resource allows connecting an existing GKE cluster to CAST AI.
-        name: castai_gke_cluster_id Resource - CAST AI
-        title: castai_gke_cluster_id Resource - CAST AI
-        argumentDocs:
-            cast_service_account: (String) Service account email in cast project
-            client_service_account: (String) Service account email in client project
-            cluster_token: (String, Sensitive) CAST.AI agent cluster token
-            create: (String)
-            delete: (String)
-            id: (String) The ID of this resource.
-            location: (String) GCP cluster zone in case of zonal or region in case of regional cluster
-            name: (String) GKE cluster name
-            organization_id: (String) CAST AI organization ID
-            project_id: (String) GCP project id
-            timeouts: (Block, Optional) (see below for nested schema)
-            update: (String)
-        importStatements: []
     castai_hibernation_schedule:
         subCategory: ""
         description: CAST AI hibernation schedule resource to manage hibernation schedules.
@@ -1621,7 +1603,7 @@ resources:
             delete: (String)
             disk_cpu_ratio: (Number) Disk to CPU ratio. Sets the number of GiBs to be added for every CPU on the node. Defaults to 0
             disk_image: '(String) Image the disk is initialized from: a GKE image reference, projects/PROJECT/global/images/NAME or the same-project shorthand global/images/NAME.'
-            disk_type: '(String) Type of boot disk attached to the node. (See disk types). One of: pd-standard, pd-balanced, pd-ssd, pd-extreme'
+            disk_type: '(String) Type of boot disk attached to the node. (See disk types). One of: pd-standard, pd-balanced, pd-ssd, pd-extreme, hyperdisk-balanced'
             dns_cluster_ip: (String) IP address to use for DNS queries within the cluster
             docker_config: (String) Optional docker daemon configuration properties in JSON format. Provide only properties that you want to override. Applicable for EKS only. Available values
             drain_timeout_sec: (Number) Timeout in seconds for draining the node. Defaults to 0
@@ -1649,6 +1631,7 @@ resources:
             min_disk_size: (Number) Minimal disk size in GiB. Defaults to 100, min 30, max 65536
             mode: '(String) Mode of the secondary boot disk. MODE_UNSPECIFIED (default) - arbitrary data disk: the kubelet exposes it via SECONDARY_BOOT_DATA_DISK. CONTAINER_IMAGE_CACHE - container image cache: the kubelet exposes it via SECONDARY_BOOT_DISKS and the cluster must have image streaming enabled.'
             name: (String) Name of the node configuration. It must be unique within the cluster. In case of cluster is reonboarded to Terraform, when previously it was onboarded with CAST AI UI, and the name corresponds to previously created node configuration this resource will override existing configuration instead of creating new.
+            nested_virtualisation: '(String) Controls EC2 nested virtualisation on provisioned nodes. Allowed values: enabled, disabled. When omitted, the field is not sent to the API and the API default (nested virtualisation off) applies.'
             network_security_group: (String) Network security group to be used for provisioned nodes, if not provided default security group from castpool will be used
             network_tags: (List of String) Network tags to be added on a VM. (See network tags)
             nic_based_backend_pools: (Block List) NIC based backend pools configuration for CAST provisioned nodes. (see below for nested schema)
@@ -1658,6 +1641,8 @@ resources:
             placement: '(String) Placement of the ephemeral OS disk. One of: cacheDisk, resourceDisk, nvmeDisk'
             pod_subnet_id: (String) ID of pod subnet to be used for provisioned nodes.
             port: (Number) Port for AWS target group for CAST provisioned nodes
+            provisioned_iops: '(Number) Provisioned IOPS for the node''s boot disk. Only applies when the boot disk type is hyperdisk-balanced (set explicitly via disk_type or resolved by the service); configuring it together with an explicit different disk_type is rejected by the API. GCP valid range: 3000-160000. When both provisioned values are set, the coupling MAX(140, provisioned_iops/256) <= provisioned_throughput <= MIN(2400, provisioned_iops/4) is validated at plan time by the provider and in the service.'
+            provisioned_throughput: '(Number) Provisioned throughput in MiB/s for the node''s boot disk. Only applies when the boot disk type is hyperdisk-balanced (set explicitly via disk_type or resolved by the service); configuring it together with an explicit different disk_type is rejected by the API. GCP valid range: 140-2400 MiB/s. When both provisioned values are set, the coupling MAX(140, provisioned_iops/256) <= provisioned_throughput <= MIN(2400, provisioned_iops/4) is validated at plan time by the provider and in the service.'
             public_ip: '(Block List, Max: 1) Public IP configuration for CAST AI provisioned nodes (see below for nested schema)'
             public_ip_prefix: (String) Public IP prefix to be used for provisioned nodes
             range_name: (String) Name of the secondary IP range
@@ -1804,6 +1789,7 @@ resources:
             capacity_reservations: (Block List) Capacity reservations that this template can use for provisioning. (see below for nested schema)
             capacity_resource_group_arn: (String) Capacity resource group ARN for UltraServer capacity blocks.
             clm_enabled: (Boolean) Marks whether Container Live Migration (CLM) should be enabled for nodes created from this template. Supported on EKS, GKE, and AKS clusters. CLM-enabled nodes participate in live workload migration during rebalancing, scale-down, and node lifecycle events.
+            clm_networking_mode: '(String) CLM networking mode for nodes created from this template. Controls how TCP connections are handled during live migration. Valid values: default, none, tc, cni. Applied only if clm_enabled=true. Removing this attribute does not reset the mode; set it to default explicitly.'
             cluster_id: (String) CAST AI cluster id.
             compute_optimized: (Boolean) Compute optimized instance constraint (deprecated).
             compute_optimized_state: '(String) Will only include compute optimized nodes when enabled and exclude compute optimized nodes when disabled. Empty value won''t have effect on instances filter. Supported values: enabled, disabled or empty string.'
@@ -3081,6 +3067,51 @@ resources:
                       "type": "AVERAGE_VALUE_FROM_ORIGINAL_REQUESTS"
                     }
                   ],
+                  "hpa_settings": [
+                    {
+                      "management_option": "MANAGED",
+                      "native_hpa_spec": [
+                        {
+                          "behavior": [
+                            {
+                              "scale_down": [
+                                {
+                                  "policies": [
+                                    {
+                                      "period_seconds": 60,
+                                      "type": "PODS_SCALING_POLICY",
+                                      "value": 1
+                                    }
+                                  ],
+                                  "select_policy": "MAX_CHANGE_POLICY_SELECT",
+                                  "stabilization_window_seconds": 300
+                                }
+                              ]
+                            }
+                          ],
+                          "max_replicas": 20,
+                          "metrics": [
+                            {
+                              "resource": [
+                                {
+                                  "name": "cpu",
+                                  "target": [
+                                    {
+                                      "type": "UTILIZATION",
+                                      "value": "80"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "type": "RESOURCE"
+                            }
+                          ],
+                          "min_replicas": 2
+                        }
+                      ],
+                      "take_ownership": true
+                    }
+                  ],
                   "jvm": [
                     {
                       "memory": [
@@ -3159,6 +3190,7 @@ resources:
             args: (List of String) The arguments for the function - i.e. for QUANTILE this should be a [0, 1] float. MAX doesn't accept any args
             assignment_rules: (Block List) Allows defining conditions for automatically assigning workloads to this scaling policy. (see below for nested schema)
             auto_instrument: (Boolean) When true, JMX exporter will be automatically injected into pods where JVM runtime is detected.
+            behavior: '(Block List, Max: 1) (see below for nested schema)'
             cluster_id: (String) CAST AI cluster id
             confidence: '(Block List, Max: 1) Defines the confidence settings for applying recommendations. (see below for nested schema)'
             consider_anti_affinity: |-
@@ -3183,6 +3215,7 @@ resources:
                 (List of String) Group, version, and kind for Kubernetes resources. Format: kind[.version][.group].
                 It can be either:
             hpa_converters: (Block List) Configuration for converting existing HPAs when VPA is the sole optimization. If HPA management is enabled, it takes precedence over this setting. (see below for nested schema)
+            hpa_settings: '(Block List, Max: 1) Configures native Kubernetes horizontal pod autoscaling for workloads using this policy. (see below for nested schema)'
             id: (String) The ID of this resource.
             jvm: '(Block List, Max: 1) JVM optimization settings. (see below for nested schema)'
             key: (String) The label key to match. Required for all operators except Regex and Contains. If not specified, it will search through all labels.
@@ -3191,16 +3224,20 @@ resources:
             look_back_period_seconds: (Number) The look back period in seconds for the recommendation.
             management_option: (String) Defines possible options for workload management.
             max: (Number, Deprecated) Max values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
+            max_replicas: (Number) Maximum number of replicas.
             memory: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             memory.limit: 'block:'
             memory_event: '(Block List, Max: 1) (see below for nested schema)'
             memory_gib: (Number) Memory in GiB to request during startup.
+            metrics: '(Block List, Min: 1) Resource utilization metrics used by the HPA. (see below for nested schema)'
             min: (Number, Deprecated) Min values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
             min_pressured_pod_percentage: (Number) Percentage (0-100) of pods that must be experiencing pressure for the detector to trigger.
+            min_replicas: (Number) Minimum number of replicas.
             multiplier: (Number) Multiplier used to calculate the resource limit. It must be defined for the MULTIPLIER strategy.
             name: (String) Scaling policy name
             names: (List of String) Defines matching by namespace names.
             namespace: '(Block List, Max: 1) Allows assigning a scaling policy based on the workload''s namespace. (see below for nested schema)'
+            native_hpa_spec: '(Block List, Min: 1, Max: 1) Native Kubernetes HPA specification. (see below for nested schema)'
             numerator: (Number) The numerator affects vertical stretch of function used in adaptive threshold - smaller number will create smaller threshold.It must be defined for the CUSTOM_ADAPTIVE strategy.
             only_if_original_exist: |-
                 (Boolean) When set to true, limits will only be set if the workload originally had limits defined in its manifest.
@@ -3213,22 +3250,28 @@ resources:
             overhead: (Number) Overhead for the recommendation, e.g. 0.1 will result in 10% higher recommendation
             percentage: (Number) Percentage of a how much difference should there be between the current pod requests and the new recommendation. It must be defined for the PERCENTAGE strategy.
             percentage_of_original: (Number) Bound as a percentage of the original pod-spec request.
-            period_seconds: |-
-                (Number) Defines the duration (in seconds) during which elevated resource usage is expected at startup.
-                When set, recommendations will be adjusted to disregard resource spikes within this period.
-                If not specified, the workload will receive standard recommendations without startup considerations.
+            period_seconds: (Number)
+            policies: (Block List) (see below for nested schema)
             predictive_scaling: '(Block List, Max: 1) (see below for nested schema)'
             prefer_one_by_one: (Boolean) Defines if pods should be restarted one by one to avoid service disruption.
             read: (String)
             requests_on_startup: '(Block List, Max: 1) Defines the resource requests to use during startup. (see below for nested schema)'
+            resource: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             rollout_behavior: '(Block List, Max: 1) Defines the rollout behavior used when applying recommendations. Prerequisites:'
             rules: '(Block List, Min: 1) (see below for nested schema)'
+            scale_down: '(Block List, Max: 1) (see below for nested schema)'
+            scale_up: '(Block List, Max: 1) (see below for nested schema)'
+            select_policy: (String)
+            stabilization_window_seconds: (Number)
             startup: '(Block List, Max: 1) (see below for nested schema)'
+            take_ownership: (Boolean) Allows CAST AI to take ownership of eligible existing HPAs.
+            target: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             threshold: (Number) Defines the confidence threshold for applying recommendations. The smaller number indicates that we require fewer metrics data points to apply recommendations - changing this value can cause applying less precise recommendations. Do not change the default unless you want to optimize with fewer data points (e.g., short-lived workloads).
             timeouts: (Block, Optional) (see below for nested schema)
             two_phase_recommendations: '(Block List, Max: 1) Defines two-phase recommendations settings for the startup period. (see below for nested schema)'
             type: (String) Defines apply theshold strategy type.
             update: (String)
+            value: (String)
             values: (List of String) A list of values to match against the label key. It is required for In, NotIn, Regex, and Contains operators.
             workload: '(Block List, Max: 1) Allows assigning a scaling policy based on the workload''s metadata. (see below for nested schema)'
         importStatements:
