@@ -996,6 +996,18 @@ type NetworkingInitParameters struct {
 	// CNI (kube-router) configuration for the edge cluster.
 	Cni *CniInitParameters `json:"cni,omitempty" tf:"cni,omitempty"`
 
+	// (String) External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	// External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	ExternalCidr *string `json:"externalCidr,omitempty" tf:"external_cidr,omitempty"`
+
+	// (String) Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	// Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	PodCidr *string `json:"podCidr,omitempty" tf:"pod_cidr,omitempty"`
+
+	// (String) Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	// Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	ServiceCidr *string `json:"serviceCidr,omitempty" tf:"service_cidr,omitempty"`
+
 	// (List of String) List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.
 	// List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.
 	TunneledCidrs []*string `json:"tunneledCidrs,omitempty" tf:"tunneled_cidrs,omitempty"`
@@ -1006,6 +1018,18 @@ type NetworkingObservation struct {
 	// router) configuration for the edge cluster. (see below for nested schema)
 	// CNI (kube-router) configuration for the edge cluster.
 	Cni *CniObservation `json:"cni,omitempty" tf:"cni,omitempty"`
+
+	// (String) External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	// External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	ExternalCidr *string `json:"externalCidr,omitempty" tf:"external_cidr,omitempty"`
+
+	// (String) Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	// Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	PodCidr *string `json:"podCidr,omitempty" tf:"pod_cidr,omitempty"`
+
+	// (String) Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	// Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	ServiceCidr *string `json:"serviceCidr,omitempty" tf:"service_cidr,omitempty"`
 
 	// (List of String) List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.
 	// List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.
@@ -1018,6 +1042,21 @@ type NetworkingParameters struct {
 	// CNI (kube-router) configuration for the edge cluster.
 	// +kubebuilder:validation:Optional
 	Cni *CniParameters `json:"cni,omitempty" tf:"cni,omitempty"`
+
+	// (String) External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	// External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
+	// +kubebuilder:validation:Optional
+	ExternalCidr *string `json:"externalCidr,omitempty" tf:"external_cidr,omitempty"`
+
+	// (String) Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	// Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
+	// +kubebuilder:validation:Optional
+	PodCidr *string `json:"podCidr,omitempty" tf:"pod_cidr,omitempty"`
+
+	// (String) Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	// Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
+	// +kubebuilder:validation:Optional
+	ServiceCidr *string `json:"serviceCidr,omitempty" tf:"service_cidr,omitempty"`
 
 	// (List of String) List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.
 	// List of destination CIDR blocks whose traffic should be routed through the main cluster instead of directly from the edge cluster.

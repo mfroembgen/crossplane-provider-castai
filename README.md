@@ -5,12 +5,15 @@ is built using [Upjet](https://github.com/crossplane/upjet) code
 generation tools and exposes XRM-conformant managed resources for the
 CastAI API.
 
+This fork preserves native HPA settings and embeds the matching
+[Terraform provider fork](https://github.com/mfroembgen/terraform-provider-castai).
+
 ## Getting Started
 
 Install the provider by using the following command after changing the image tag
-to the [latest release](https://marketplace.upbound.io/providers/crossplane-contrib/crossplane-provider-castai):
+to the [latest release](https://github.com/mfroembgen/crossplane-provider-castai/releases):
 ```
-up ctp provider install crossplane-contrib/crossplane-provider-castai:v0.43.0
+up ctp provider install ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
 ```
 
 Alternatively, you can use declarative installation:
@@ -21,7 +24,7 @@ kind: Provider
 metadata:
   name: crossplane-provider-castai
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/crossplane-provider-castai:v0.43.0
+  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
 EOF
 ```
 
@@ -49,24 +52,29 @@ kind: Provider
 metadata:
   name: crossplane-provider-castai
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/crossplane-provider-castai:v0.43.0
+  package: ghcr.io/mfroembgen/crossplane-provider-castai-api-parity:v0.42.0
   runtimeConfigRef:
     name: debug-config
 EOF
 ```
 
-You can see the API reference [here](https://doc.crds.dev/github.com/crossplane-contrib/crossplane-provider-castai).
+The [upstream API reference](https://doc.crds.dev/github.com/crossplane-contrib/crossplane-provider-castai)
+covers the shared resources. See the [ScalingPolicy CRD](package/crds/castai.upbound.io_scalingpolicies.yaml)
+for this fork's native HPA fields.
 
 ## Developing
+
+Install the tools pinned in `mise.toml` with `mise install`. Generation needs
+`goimports` on `PATH`, as configured in CI.
 
 Update the submodules, such as the common build scripts:
 ```console
 make submodules
 ```
 
-Run code-generation pipeline:
+Run the complete code-generation pipeline:
 ```console
-go run cmd/generator/main.go "$PWD"
+make generate
 ```
 
 Run against a Kubernetes cluster:
@@ -75,7 +83,7 @@ Run against a Kubernetes cluster:
 make run
 ```
 
-Build, push, and install:
+Build packages:
 
 ```console
 make all
@@ -89,55 +97,25 @@ make build
 
 ### Updating to a New Terraform Provider Version
 
-To regenerate the Crossplane provider against a new version of the
-[Terraform CAST AI provider](https://github.com/castai/terraform-provider-castai):
+To update the embedded [Terraform provider fork](https://github.com/mfroembgen/terraform-provider-castai):
 
-1. **Update the version in the `Makefile`** — change the two version references:
+1. Set `TERRAFORM_PROVIDER_VERSION` to the upstream release the fork is based
+   on and `TERRAFORM_PROVIDER_COMMIT` to the fork commit carrying its patches
+   in `Makefile`. Generation and the image build compile the provider from that
+   commit, the image with the Go version in `.tool-versions`.
+2. Run `make submodules` once, then `make generate`. This builds the provider,
+   extracts its schema, pulls the documentation, transforms Plugin
+   Framework attributes for Upjet v1, and regenerates the Go API and CRDs.
+3. Run `make vendor vendor.check reviewable` and inspect changes to existing API
+   fields before publishing. The native HPA serialization test must pass.
+4. If exposing a new Terraform resource, add its external name in
+   `config/external_name.go`, create its configuration package, and register it
+   in `config/provider.go` before regenerating.
 
-   ```makefile
-   export TERRAFORM_PROVIDER_VERSION ?= <NEW_VERSION>        # e.g. 8.39.2
-   export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-castai_v<NEW_VERSION>
-   ```
-
-2. **Initialize submodules** (first time only):
-
-   ```console
-   make submodules
-   ```
-
-3. **Generate the provider schema, pull docs, and transform the schema**:
-
-   ```console
-   make generate.init
-   ```
-
-   This downloads the Terraform provider binary, runs `terraform providers schema`
-   to produce `config/schema.json`, clones the upstream docs, and runs
-   `hack/transform-schema.py` to convert `nested_type` attributes for Upjet v1
-   compatibility.
-
-4. **Run the Upjet code-generation pipeline**:
-
-   ```console
-   go run cmd/generator/main.go "$PWD"
-   ```
-
-5. **Regenerate deepcopy helpers, CRDs, and other artifacts**:
-
-   ```console
-   make generate
-   ```
-
-6. **If the new version introduces new Terraform resources**, you also need to:
-   - Add an external name entry in `config/external_name.go`.
-   - Create a resource config package under `config/<resource>/config.go`.
-   - Register the `Configure` function in `config/provider.go`.
-
-7. **Build and verify**:
-
-   ```console
-   go build ./...
-   ```
+CI builds and checks both Linux packages without a Kubernetes deployment.
+After review, dispatch CI with `publish=true` to publish the checked packages.
+Publication refuses an existing version; keep upstream tags on upstream commits
+and record the patched source commit and package digest in the fork release.
 
 ## Report a Bug
 

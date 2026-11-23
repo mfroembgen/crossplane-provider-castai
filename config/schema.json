@@ -3243,6 +3243,24 @@
               "networking": {
                 "block": {
                   "attributes": {
+                    "external_cidr": {
+                      "type": "string",
+                      "description": "External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "pod_cidr": {
+                      "type": "string",
+                      "description": "Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "service_cidr": {
+                      "type": "string",
+                      "description": "Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
                     "tunneled_cidrs": {
                       "type": [
                         "list",
@@ -8893,6 +8911,208 @@
                   "description_kind": "plain"
                 }
               },
+              "hpa_settings": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "management_option": {
+                      "type": "string",
+                      "description": "Defines whether CAST AI observes or manages horizontal pod autoscaling.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "take_ownership": {
+                      "type": "bool",
+                      "description": "Allows CAST AI to take ownership of eligible existing HPAs.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "block_types": {
+                    "native_hpa_spec": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "max_replicas": {
+                            "type": "number",
+                            "description": "Maximum number of replicas.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "min_replicas": {
+                            "type": "number",
+                            "description": "Minimum number of replicas.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "behavior": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "block_types": {
+                                "scale_down": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "select_policy": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      },
+                                      "stabilization_window_seconds": {
+                                        "type": "number",
+                                        "description": "When omitted, the provider sends 0 for scale_up and 300 for scale_down.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "block_types": {
+                                      "policies": {
+                                        "nesting_mode": "list",
+                                        "block": {
+                                          "attributes": {
+                                            "period_seconds": {
+                                              "type": "number",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            },
+                                            "value": {
+                                              "type": "number",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            }
+                                          },
+                                          "description_kind": "plain"
+                                        }
+                                      }
+                                    },
+                                    "description_kind": "plain"
+                                  },
+                                  "max_items": 1
+                                },
+                                "scale_up": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "select_policy": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      },
+                                      "stabilization_window_seconds": {
+                                        "type": "number",
+                                        "description": "When omitted, the provider sends 0 for scale_up and 300 for scale_down.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "block_types": {
+                                      "policies": {
+                                        "nesting_mode": "list",
+                                        "block": {
+                                          "attributes": {
+                                            "period_seconds": {
+                                              "type": "number",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            },
+                                            "value": {
+                                              "type": "number",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            }
+                                          },
+                                          "description_kind": "plain"
+                                        }
+                                      }
+                                    },
+                                    "description_kind": "plain"
+                                  },
+                                  "max_items": 1
+                                }
+                              },
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metrics": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "type": {
+                                  "type": "string",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "block_types": {
+                                "resource": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "name": {
+                                        "type": "string",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      }
+                                    },
+                                    "block_types": {
+                                      "target": {
+                                        "nesting_mode": "list",
+                                        "block": {
+                                          "attributes": {
+                                            "type": {
+                                              "type": "string",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            },
+                                            "value": {
+                                              "type": "string",
+                                              "description_kind": "plain",
+                                              "required": true
+                                            }
+                                          },
+                                          "description_kind": "plain"
+                                        },
+                                        "min_items": 1,
+                                        "max_items": 1
+                                      }
+                                    },
+                                    "description_kind": "plain"
+                                  },
+                                  "min_items": 1,
+                                  "max_items": 1
+                                }
+                              },
+                              "description": "Resource utilization metrics used by the HPA.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1
+                          }
+                        },
+                        "description": "Native Kubernetes HPA specification.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Configures native Kubernetes horizontal pod autoscaling for workloads using this policy.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
               "jvm": {
                 "nesting_mode": "list",
                 "block": {
@@ -10567,6 +10787,109 @@
                 "description_kind": "plain",
                 "computed": true
               },
+              "hpa_settings": {
+                "type": [
+                  "list",
+                  [
+                    "object",
+                    {
+                      "management_option": "string",
+                      "native_hpa_spec": [
+                        "list",
+                        [
+                          "object",
+                          {
+                            "behavior": [
+                              "list",
+                              [
+                                "object",
+                                {
+                                  "scale_down": [
+                                    "list",
+                                    [
+                                      "object",
+                                      {
+                                        "policies": [
+                                          "list",
+                                          [
+                                            "object",
+                                            {
+                                              "period_seconds": "number",
+                                              "type": "string",
+                                              "value": "number"
+                                            }
+                                          ]
+                                        ],
+                                        "select_policy": "string",
+                                        "stabilization_window_seconds": "number"
+                                      }
+                                    ]
+                                  ],
+                                  "scale_up": [
+                                    "list",
+                                    [
+                                      "object",
+                                      {
+                                        "policies": [
+                                          "list",
+                                          [
+                                            "object",
+                                            {
+                                              "period_seconds": "number",
+                                              "type": "string",
+                                              "value": "number"
+                                            }
+                                          ]
+                                        ],
+                                        "select_policy": "string",
+                                        "stabilization_window_seconds": "number"
+                                      }
+                                    ]
+                                  ]
+                                }
+                              ]
+                            ],
+                            "max_replicas": "number",
+                            "metrics": [
+                              "list",
+                              [
+                                "object",
+                                {
+                                  "resource": [
+                                    "list",
+                                    [
+                                      "object",
+                                      {
+                                        "name": "string",
+                                        "target": [
+                                          "list",
+                                          [
+                                            "object",
+                                            {
+                                              "type": "string",
+                                              "value": "string"
+                                            }
+                                          ]
+                                        ]
+                                      }
+                                    ]
+                                  ],
+                                  "type": "string"
+                                }
+                              ]
+                            ],
+                            "min_replicas": "number"
+                          }
+                        ]
+                      ],
+                      "take_ownership": "bool"
+                    }
+                  ]
+                ],
+                "description": "Configures native Kubernetes horizontal pod autoscaling for workloads using this policy.",
+                "description_kind": "plain",
+                "computed": true
+              },
               "id": {
                 "type": "string",
                 "description_kind": "plain",
@@ -10792,7 +11115,7 @@
                 "computed": true
               }
             },
-            "description": "Fetches a single workload scaling policy by id or name, including system (read-only) policies. Returns the full policy definition, which can be used as a template for defining custom policies without keeping policy definitions as static code.",
+            "description": "Fetches a single workload scaling policy by id or name, including system (read-only) policies. Returns the full policy definition, which can be used as a template for defining custom policies without keeping policy definitions as static code. Native HPA settings support RESOURCE metrics with UTILIZATION targets only; reading a policy with other HPA metrics or targets returns an error to avoid discarding configuration.",
             "description_kind": "plain"
           }
         },

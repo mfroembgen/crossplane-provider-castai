@@ -18,18 +18,6 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Bump castai terraform provider version in the Makefile",
-      "fileMatch": ["^Makefile$"],
-      "matchStrings": [
-        "export TERRAFORM_PROVIDER_VERSION \\?= (?<currentValue>.*?)\\n",
-        "export TERRAFORM_NATIVE_PROVIDER_BINARY \\?= terraform-provider-castai_v(?<currentValue>.*?)\\n"
-      ],
-      "datasourceTemplate": "github-releases",
-      "extractVersionTemplate": "^v?(?<version>.*)$",
-      "depNameTemplate": "castai/terraform-provider-castai",
-    },
-    {
-      "customType": "regex",
       "description": "Bump up version in the Makefile",
       "fileMatch": ["^Makefile$"],
       "matchStrings": [

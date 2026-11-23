@@ -1027,6 +1027,7 @@ resources:
             custom: (Attributes) Custom cloud provider configuration for the edge location (see below for nested schema)
             description: (String) Description of the edge location
             external_address: (String) The IP address or hostname used to reach the API server from outside the cluster, if in-cluster LoadBalancer services are not reachable (e.g. cluster is hidden behind an external LoadBalancer).
+            external_cidr: (String) External CIDR used by Liqo on the edge cluster. Defaults to 10.70.0.0/16 when omitted. Immutable after creation.
             external_port: (Number) The port used for the Liqo gateway server.
             fingerprint_wo: (String, Sensitive, Write-only) API key fingerprint
             gateway_replicas: (Number) Number of active replicas for the Liqo gateway servers and clients. Defaults to 1 when unset.
@@ -1050,6 +1051,7 @@ resources:
             overlay: '(String) Overlay mode for kube-router pod-to-pod traffic. Valid values: OVERLAY_UNSPECIFIED, OVERLAY_OFF, OVERLAY_SUBNET, OVERLAY_FULL.'
             overlay_encap: '(String) Encapsulation protocol used by the overlay. Valid values: OVERLAY_ENCAP_UNSPECIFIED, OVERLAY_ENCAP_IPIP, OVERLAY_ENCAP_FOU.'
             parent_id: (String) Nebius project ID that owns the edge location resources
+            pod_cidr: (String) Pod network range of the edge cluster. Defaults to the k0s default (10.244.0.0/16) when omitted. Immutable after creation.
             private_key_base64_wo: (String, Sensitive, Write-only) Base64 encoded API private key
             project_id: (String) GCP project ID where edges run
             region: (String) The region where the edge location is deployed. Required for AWS, GCP and OCI providers.
@@ -1058,6 +1060,7 @@ resources:
             security_group_id: (String) Security group ID to be used in the selected region
             service_account_id: (String) Nebius service account ID to be impersonated by CAST AI
             service_annotations: (Map of String) Custom annotations to apply to the control plane service.
+            service_cidr: (String) Service network range of the edge cluster. Defaults to the k0s default (10.96.0.0/12) when omitted. Immutable after creation.
             service_labels: (Map of String) Custom labels to apply to the Liqo gateway service.
             subnet_cidr: (String) VPC Subnet IPv4 CIDR block
             subnet_id: (String) The ID of the subnet to be used in the selected region
@@ -3067,6 +3070,51 @@ resources:
                       "type": "AVERAGE_VALUE_FROM_ORIGINAL_REQUESTS"
                     }
                   ],
+                  "hpa_settings": [
+                    {
+                      "management_option": "MANAGED",
+                      "native_hpa_spec": [
+                        {
+                          "behavior": [
+                            {
+                              "scale_down": [
+                                {
+                                  "policies": [
+                                    {
+                                      "period_seconds": 60,
+                                      "type": "PODS_SCALING_POLICY",
+                                      "value": 1
+                                    }
+                                  ],
+                                  "select_policy": "MAX_CHANGE_POLICY_SELECT",
+                                  "stabilization_window_seconds": 300
+                                }
+                              ]
+                            }
+                          ],
+                          "max_replicas": 20,
+                          "metrics": [
+                            {
+                              "resource": [
+                                {
+                                  "name": "cpu",
+                                  "target": [
+                                    {
+                                      "type": "UTILIZATION",
+                                      "value": "80"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "type": "RESOURCE"
+                            }
+                          ],
+                          "min_replicas": 2
+                        }
+                      ],
+                      "take_ownership": true
+                    }
+                  ],
                   "jvm": [
                     {
                       "memory": [
@@ -3145,6 +3193,7 @@ resources:
             args: (List of String) The arguments for the function - i.e. for QUANTILE this should be a [0, 1] float. MAX doesn't accept any args
             assignment_rules: (Block List) Allows defining conditions for automatically assigning workloads to this scaling policy. (see below for nested schema)
             auto_instrument: (Boolean) When true, JMX exporter will be automatically injected into pods where JVM runtime is detected.
+            behavior: '(Block List, Max: 1) (see below for nested schema)'
             cluster_id: (String) CAST AI cluster id
             confidence: '(Block List, Max: 1) Defines the confidence settings for applying recommendations. (see below for nested schema)'
             consider_anti_affinity: |-
@@ -3169,6 +3218,7 @@ resources:
                 (List of String) Group, version, and kind for Kubernetes resources. Format: kind[.version][.group].
                 It can be either:
             hpa_converters: (Block List) Configuration for converting existing HPAs when VPA is the sole optimization. If HPA management is enabled, it takes precedence over this setting. (see below for nested schema)
+            hpa_settings: '(Block List, Max: 1) Configures native Kubernetes horizontal pod autoscaling for workloads using this policy. (see below for nested schema)'
             id: (String) The ID of this resource.
             jvm: '(Block List, Max: 1) JVM optimization settings. (see below for nested schema)'
             key: (String) The label key to match. Required for all operators except Regex and Contains. If not specified, it will search through all labels.
@@ -3177,16 +3227,20 @@ resources:
             look_back_period_seconds: (Number) The look back period in seconds for the recommendation.
             management_option: (String) Defines possible options for workload management.
             max: (Number, Deprecated) Max values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
+            max_replicas: (Number) Maximum number of replicas.
             memory: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             memory.limit: 'block:'
             memory_event: '(Block List, Max: 1) (see below for nested schema)'
             memory_gib: (Number) Memory in GiB to request during startup.
+            metrics: '(Block List, Min: 1) Resource utilization metrics used by the HPA. (see below for nested schema)'
             min: (Number, Deprecated) Min values for the recommendation, applies to every container. For memory - this is in MiB, for CPU - this is in cores.
             min_pressured_pod_percentage: (Number) Percentage (0-100) of pods that must be experiencing pressure for the detector to trigger.
+            min_replicas: (Number) Minimum number of replicas.
             multiplier: (Number) Multiplier used to calculate the resource limit. It must be defined for the MULTIPLIER strategy.
             name: (String) Scaling policy name
             names: (List of String) Defines matching by namespace names.
             namespace: '(Block List, Max: 1) Allows assigning a scaling policy based on the workload''s namespace. (see below for nested schema)'
+            native_hpa_spec: '(Block List, Min: 1, Max: 1) Native Kubernetes HPA specification. (see below for nested schema)'
             numerator: (Number) The numerator affects vertical stretch of function used in adaptive threshold - smaller number will create smaller threshold.It must be defined for the CUSTOM_ADAPTIVE strategy.
             only_if_original_exist: |-
                 (Boolean) When set to true, limits will only be set if the workload originally had limits defined in its manifest.
@@ -3199,22 +3253,28 @@ resources:
             overhead: (Number) Overhead for the recommendation, e.g. 0.1 will result in 10% higher recommendation
             percentage: (Number) Percentage of a how much difference should there be between the current pod requests and the new recommendation. It must be defined for the PERCENTAGE strategy.
             percentage_of_original: (Number) Bound as a percentage of the original pod-spec request.
-            period_seconds: |-
-                (Number) Defines the duration (in seconds) during which elevated resource usage is expected at startup.
-                When set, recommendations will be adjusted to disregard resource spikes within this period.
-                If not specified, the workload will receive standard recommendations without startup considerations.
+            period_seconds: (Number)
+            policies: (Block List) (see below for nested schema)
             predictive_scaling: '(Block List, Max: 1) (see below for nested schema)'
             prefer_one_by_one: (Boolean) Defines if pods should be restarted one by one to avoid service disruption.
             read: (String)
             requests_on_startup: '(Block List, Max: 1) Defines the resource requests to use during startup. (see below for nested schema)'
+            resource: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             rollout_behavior: '(Block List, Max: 1) Defines the rollout behavior used when applying recommendations. Prerequisites:'
             rules: '(Block List, Min: 1) (see below for nested schema)'
+            scale_down: '(Block List, Max: 1) (see below for nested schema)'
+            scale_up: '(Block List, Max: 1) (see below for nested schema)'
+            select_policy: (String)
+            stabilization_window_seconds: (Number) When omitted, the provider sends 0 for scale_up and 300 for scale_down.
             startup: '(Block List, Max: 1) (see below for nested schema)'
+            take_ownership: (Boolean) Allows CAST AI to take ownership of eligible existing HPAs.
+            target: '(Block List, Min: 1, Max: 1) (see below for nested schema)'
             threshold: (Number) Defines the confidence threshold for applying recommendations. The smaller number indicates that we require fewer metrics data points to apply recommendations - changing this value can cause applying less precise recommendations. Do not change the default unless you want to optimize with fewer data points (e.g., short-lived workloads).
             timeouts: (Block, Optional) (see below for nested schema)
             two_phase_recommendations: '(Block List, Max: 1) Defines two-phase recommendations settings for the startup period. (see below for nested schema)'
             type: (String) Defines apply theshold strategy type.
             update: (String)
+            value: (String)
             values: (List of String) A list of values to match against the label key. It is required for In, NotIn, Regex, and Contains operators.
             workload: '(Block List, Max: 1) Allows assigning a scaling policy based on the workload''s metadata. (see below for nested schema)'
         importStatements:

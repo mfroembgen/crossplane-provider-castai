@@ -2,9 +2,9 @@
 # fallback for builds that do not go through the Makefile.
 ARG GO_VERSION=1.26.11
 
-# Rebuild the Terraform CLI and the CAST AI provider plugin from their upstream
-# release tags with a Go toolchain that carries the eMudhra CA distrust
-# (CVE-2026-111943). Same versions and build flags as upstream.
+# Rebuild the Terraform CLI from its upstream release tag and the CAST AI
+# provider plugin from the fork's pinned commit with a Go toolchain that carries
+# the eMudhra CA distrust (CVE-2026-111943). Same build flags as upstream.
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS tf-builder
 
 RUN apk --no-cache add git
@@ -29,11 +29,15 @@ RUN git clone -c advice.detachedHead=false --depth 1 --branch "v${TERRAFORM_VERS
        -o /out/terraform . \
   && install -D -m 0644 LICENSE /out/licenses/terraform/LICENSE
 
-# CAST AI Terraform provider plugin (MIT)
-RUN git clone -c advice.detachedHead=false --depth 1 --branch "v${TERRAFORM_PROVIDER_VERSION}" \
-      "https://github.com/castai/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}" /src/provider \
+# CAST AI Terraform provider plugin (MIT), from the fork's pinned native HPA commit
+ARG TERRAFORM_PROVIDER_REPO
+ARG TERRAFORM_PROVIDER_COMMIT
+RUN git init -q /src/provider \
   && cd /src/provider \
-  && go build -ldflags "-s -w -X main.version=${TERRAFORM_PROVIDER_VERSION} -X main.commit=$(git rev-parse HEAD)" \
+  && git fetch -q --depth 1 "${TERRAFORM_PROVIDER_REPO}" "${TERRAFORM_PROVIDER_COMMIT}" \
+  && git checkout -q --detach FETCH_HEAD \
+  && test "$(git rev-parse HEAD)" = "${TERRAFORM_PROVIDER_COMMIT}" \
+  && go build -ldflags "-s -w -X main.version=${TERRAFORM_PROVIDER_VERSION} -X main.commit=${TERRAFORM_PROVIDER_COMMIT}" \
        -o "/out/${TERRAFORM_NATIVE_PROVIDER_BINARY}" . \
   && install -D -m 0644 LICENSE "/out/licenses/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}/LICENSE"
 
